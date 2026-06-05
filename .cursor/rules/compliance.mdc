@@ -1,0 +1,9 @@
+---
+description: "Audit, certificates, and client-facing API masking"
+globs: ["services/sentinel-api/src/modules/audit/**", "services/sentinel-api/src/modules/certificates/**"]
+alwaysApply: false
+---
+# Compliance guardrails
+1. Every state mutation appends to `audit_events` (userId, IP, payload hash chain).
+2. Never expose tape barcode, rack, or slot in client-facing API responses.
+3. Certificates: PDF + RSA-SHA256; store PDF SHA-256 in DB.

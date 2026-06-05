@@ -1,0 +1,314 @@
+openapi: 3.1.0
+info:
+  title: BioVault Sentinel API
+  version: 0.1.0-mvp
+  description: |
+    Phase 1 metadata and job orchestration API. File bytes never returned inline;
+    retrieval uses time-limited staging download URLs.
+servers:
+  - url: http://localhost:4000
+    description: Local development
+tags:
+  - name: system
+  - name: auth
+  - name: ingest
+  - name: search
+  - name: jobs
+  - name: tapes
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Health check
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Login with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Session cookie set (`sentinel_session`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserResponse"
+        "401":
+          description: Invalid credentials
+        "429":
+          description: Rate limited
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: End session
+      operationId: logout
+      security:
+        - cookieAuth: []
+      responses:
+        "204":
+          description: Logged out
+        "401":
+          description: Not authenticated
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      summary: Current user profile
+      operationId: getCurrentUser
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserResponse"
+        "401":
+          description: Not authenticated
+  /api/v1/clients/me:
+    get:
+      tags: [auth]
+      summary: Current client tenant profile
+      operationId: getClientProfile
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientProfileResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a client user
+  /api/v1/clients/me/onboarding:
+    patch:
+      tags: [auth]
+      summary: Update onboarding stub (client admin)
+      operationId: updateClientOnboarding
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingUpdateRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientProfileResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+  /api/v1/ingest/jobs:
+    post:
+      tags: [ingest]
+      summary: Create ingest job (stub — Day 3)
+      operationId: createIngestJob
+      security:
+        - cookieAuth: []
+      responses:
+        "501":
+          description: Not implemented yet
+  /api/v1/search/files:
+    get:
+      tags: [search]
+      summary: Search indexed files (stub — Day 6)
+      operationId: searchFiles
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "501":
+          description: Not implemented yet
+  /api/v1/retrieval/jobs:
+    post:
+      tags: [jobs]
+      summary: Request file retrieval (stub — Day 7)
+      operationId: createRetrievalJob
+      security:
+        - cookieAuth: []
+      responses:
+        "501":
+          description: Not implemented yet
+  /api/v1/admin/jobs:
+    get:
+      tags: [jobs]
+      summary: List ops jobs with SLA (stub — Day 8)
+      operationId: listAdminJobs
+      security:
+        - cookieAuth: []
+      responses:
+        "501":
+          description: Not implemented yet
+  /api/v1/admin/tapes:
+    get:
+      tags: [tapes]
+      summary: Tape inventory (stub — Day 10)
+      operationId: listTapes
+      security:
+        - cookieAuth: []
+      responses:
+        "501":
+          description: Not implemented yet
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sentinel_session
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, version, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            mongodb:
+              type: string
+              enum: [up, down]
+            redis:
+              type: string
+              enum: [up, down]
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    AuthUser:
+      type: object
+      required: [id, email, role, mfaEnabled]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - client_admin
+            - client_viewer
+            - compliance_officer
+            - ops_admin
+            - technician
+        clientId:
+          type: string
+        mfaEnabled:
+          type: boolean
+    AuthUserResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+    ClientProfile:
+      type: object
+      required: [id, name, slug, tier, retentionPolicyYears, dataCategories, onboardingComplete]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        tier:
+          type: string
+          enum: [base, standard, enterprise]
+        retentionPolicyYears:
+          type: integer
+        dataCategories:
+          type: array
+          items:
+            type: string
+        onboardingComplete:
+          type: boolean
+    ClientProfileResponse:
+      type: object
+      required: [client]
+      properties:
+        client:
+          $ref: "#/components/schemas/ClientProfile"
+    OnboardingUpdateRequest:
+      type: object
+      properties:
+        dataCategories:
+          type: array
+          items:
+            type: string
+        retentionPolicyYears:
+          type: integer
+          minimum: 1
+          maximum: 50
+    ClientFileSearchResult:
+      type: object
+      description: Client-visible metadata only (no tape location)
+      required: [id, filename, fileType, category, ingestedAt]
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        fileType:
+          type: string
+        category:
+          type: string
+        ingestedAt:
+          type: string
+          format: date-time
+    AdminFileSearchResult:
+      allOf:
+        - $ref: "#/components/schemas/ClientFileSearchResult"
+        - type: object
+          properties:
+            tapeBarcode:
+              type: string
+            rack:
+              type: string
+            slot:
+              type: string

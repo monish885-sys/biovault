@@ -1,0 +1,9 @@
+---
+description: "Applies when modifying the data pipeline, middleware, or hardware staging layers"
+globs: ["services/sentinel-api/src/modules/ingest/**", "services/sentinel-api/src/tape/**"]
+alwaysApply: false
+---
+# Ingest logic
+1. Stream through `STAGING_PATH`; never persist file bytes in MongoDB.
+2. Use `TapeLibraryAdapter` with sequential block addresses.
+3. Heavy I/O via BullMQ workers — do not block the event loop.

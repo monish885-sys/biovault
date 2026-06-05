@@ -1,0 +1,37 @@
+# BioVault Sentinel — Phase 1 execution policy
+
+## Context
+Read `docs/KT-phase1.md` for product/compliance context. Phase 1 = managed LTO-9 archival vault + Sentinel Dashboard (metadata online, tapes air-gapped).
+
+## Stack
+- Node 22 (ESM), TypeScript strict
+- Express 5, MongoDB 7 (Mongoose), Redis + BullMQ
+- React 19 + Vite + Tailwind 4
+- Vitest (unit); Playwright optional Day 14
+
+## Security (non-negotiable)
+- No file content in MongoDB or API process memory beyond transient streams
+- Client APIs must NOT expose tape barcode, rack, or slot — admin/technician only
+- Passwords: bcrypt; sessions: httpOnly cookies; helmet + rate limits on API
+- Retrieved files: `STAGING_PATH` only; time-limited signed download; purge after TTL/download
+- Every mutating route → append `audit_events` (userId, IP, timestamp, action)
+
+## SLA
+- Retrieval `dueAt = createdAt + 15 minutes`
+- Alert hook when job unassigned > 60 seconds (log/worker stub OK in MVP)
+
+## Tape
+- Implement `TapeLibraryAdapter`; MVP = `services/sentinel-api/src/tape/simulator.ts`
+- Env `TAPE_ADAPTER=sim|mtx|scalar` for production swap
+- Post-write: verify SHA-256 read-back before tape status `live`
+
+## Monorepo boundaries
+- Apps (`client-portal`, `admin-portal`) must NOT import each other or API internals
+- Share only `@biovault/contracts` and `@biovault/common`
+- API modules under `services/sentinel-api/src/modules/*` — avoid cross-module deep imports
+
+## Certificates
+- PDF + RSA-SHA256 or Ed25519; store PDF hash in `certificates` collection
+
+## Out of scope
+- DNA/crypto codec, cloud blob storage, file bytes on public API hosts

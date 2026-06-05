@@ -1,0 +1,12 @@
+---
+alwaysApply: false
+---
+---
+description: "Applies when modifying the data pipeline, middleware, or hardware staging layers"
+globs: ["services/sentinel-api/src/modules/ingest/**", "services/sentinel-api/src/tape/**"]
+alwaysApply: false
+---
+# Ingest Logic Constraint Profiler
+1. Prioritize multithreaded buffering mechanisms via transient system directories.
+2. Ensure `TapeLibraryAdapter` handles raw data boundaries natively via sequential block addresses.
+3. Call background worker queues via BullMQ to process execution blocks. Never lock the event loop on I/O.

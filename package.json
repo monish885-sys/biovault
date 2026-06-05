@@ -1,0 +1,25 @@
+{
+  "name": "biovault-sentinel",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:api": "pnpm --filter @biovault/sentinel-api dev",
+    "dev:client": "pnpm --filter @biovault/client-portal dev",
+    "dev:admin": "pnpm --filter @biovault/admin-portal dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "compose:up": "docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example up -d",
+    "compose:down": "docker compose -f deploy/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

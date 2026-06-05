@@ -1,0 +1,6 @@
+# BioVault Sentinel: Foundational Execution Policy
+# Operation Parameters: Monorepo Root Core Context
+
+- Tech Stack Focus: Node 22 (ESM), TypeScript Strict, Express 5, MongoDB 7, Redis + BullMQ, React 19, Tailwind 4.
+- Security Constraint: ZERO persistent client file storage within MongoDB or API service processes. All data maps strictly as transient stream conduits flowing through `STAGING_PATH`.
+- Operational Domain: Do not permit relative cross-directory package bindings. Share definitions via local workspace boundaries.

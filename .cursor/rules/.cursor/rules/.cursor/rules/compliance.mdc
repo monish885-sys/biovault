@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+---
+description: "Applies when generating security records, logging mechanisms, or verifiable destruction signatures"
+globs: ["services/sentinel-api/src/modules/{audit,certificates}/**"]
+alwaysApply: false
+---
+# Compliance Audit Guardrails
+1. Every state mutation must immediately append to the `audit_events` ledger using deterministic cryptographic SHA-256 signatures.
+2. Mask physical tape barcodes, drawer layouts, and hardware inventory from client-facing API response objects.
+3. Cryptographic confirmation logs must utilize RSA-SHA256 signatures with public verification anchors.
