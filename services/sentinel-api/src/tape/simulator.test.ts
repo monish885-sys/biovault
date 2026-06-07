@@ -1,9 +1,24 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Readable } from "node:stream";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TapeSimulator } from "./simulator.js";
 
 describe("TapeSimulator", () => {
-  it("writes and reads back identical bytes", async () => {
+  let stagingDir: string;
+
+  beforeEach(async () => {
+    stagingDir = await mkdtemp(join(tmpdir(), "sentinel-tape-sim-"));
+    vi.stubEnv("STAGING_PATH", stagingDir);
+  });
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    await rm(stagingDir, { recursive: true, force: true });
+  });
+
+  it("writes and reads back identical bytes from disk blocks", async () => {
     const sim = new TapeSimulator();
     const barcode = "LTO9-TEST-001";
     await sim.mount(barcode);
@@ -17,5 +32,6 @@ describe("TapeSimulator", () => {
     for await (const c of stream) chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c));
     expect(Buffer.concat(chunks).equals(payload)).toBe(true);
     expect(written.checksumSha256).toHaveLength(64);
+    expect(written.blockId).toBe("blk-0");
   });
 });

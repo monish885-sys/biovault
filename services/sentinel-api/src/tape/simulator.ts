@@ -1,5 +1,10 @@
+import { createReadStream, createWriteStream } from "node:fs";
+import { mkdir, readdir, stat } from "node:fs/promises";
+import { join } from "node:path";
+import { pipeline } from "node:stream/promises";
+import { Transform, type Readable } from "node:stream";
 import { createHash } from "node:crypto";
-import { Readable } from "node:stream";
+import { config } from "../config.js";
 import type {
   DriveState,
   FileLocator,
@@ -7,9 +12,35 @@ import type {
   WriteResult,
 } from "./adapter.js";
 
-/** In-memory LTO-9 cartridge simulator for dev/demo (Day 4+). */
+function stagingRoot(): string {
+  return process.env.STAGING_PATH ?? config.stagingPath;
+}
+
+function cartridgeDir(barcode: string): string {
+  return join(stagingRoot(), "tape-sim", barcode);
+}
+
+function blockFilePath(barcode: string, blockId: string): string {
+  return join(cartridgeDir(barcode), `${blockId}.bin`);
+}
+
+async function cartridgeStats(barcode: string): Promise<{ blockCount: number; totalBytes: number }> {
+  const dir = cartridgeDir(barcode);
+  await mkdir(dir, { recursive: true });
+  const entries = await readdir(dir);
+  let blockCount = 0;
+  let totalBytes = 0;
+  for (const entry of entries) {
+    if (!entry.startsWith("blk-") || !entry.endsWith(".bin")) continue;
+    blockCount += 1;
+    const info = await stat(join(dir, entry));
+    totalBytes += info.size;
+  }
+  return { blockCount, totalBytes };
+}
+
+/** Disk-backed LTO-9 cartridge simulator — blocks live under STAGING_PATH/tape-sim. */
 export class TapeSimulator implements TapeLibraryAdapter {
-  private readonly cartridges = new Map<string, Buffer[]>();
   private mounted: string | null = null;
 
   async listDrives(): Promise<DriveState[]> {
@@ -17,7 +48,7 @@ export class TapeSimulator implements TapeLibraryAdapter {
   }
 
   async mount(barcode: string): Promise<void> {
-    if (!this.cartridges.has(barcode)) this.cartridges.set(barcode, []);
+    await mkdir(cartridgeDir(barcode), { recursive: true });
     this.mounted = barcode;
   }
 
@@ -26,33 +57,37 @@ export class TapeSimulator implements TapeLibraryAdapter {
   }
 
   async writeSequential(barcode: string, stream: Readable): Promise<WriteResult> {
-    const chunks: Buffer[] = [];
+    const { blockCount, totalBytes } = await cartridgeStats(barcode);
+    const blockId = `blk-${blockCount}`;
+    const dest = blockFilePath(barcode, blockId);
+
     const hash = createHash("sha256");
-    for await (const chunk of stream) {
-      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      chunks.push(buf);
-      hash.update(buf);
-    }
-    const data = Buffer.concat(chunks);
-    const blocks = this.cartridges.get(barcode) ?? [];
-    const byteOffset = blocks.reduce((n, b) => n + b.length, 0);
-    const blockId = `blk-${blocks.length}`;
-    blocks.push(data);
-    this.cartridges.set(barcode, blocks);
+    let bytesWritten = 0;
+    const hasher = new Transform({
+      transform(chunk, _enc, cb) {
+        const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        hash.update(buf);
+        bytesWritten += buf.length;
+        cb(null, buf);
+      },
+    });
+
+    await pipeline(stream, hasher, createWriteStream(dest));
     return {
       blockId,
-      byteOffset,
-      bytesWritten: data.length,
+      byteOffset: totalBytes,
+      bytesWritten,
       checksumSha256: hash.digest("hex"),
     };
   }
 
   async readSequential(barcode: string, locator: FileLocator): Promise<Readable> {
-    const blocks = this.cartridges.get(barcode);
-    if (!blocks) throw new Error(`Unknown tape: ${barcode}`);
-    const idx = Number.parseInt(locator.blockId.replace("blk-", ""), 10);
-    const block = blocks[idx];
-    if (!block) throw new Error(`Missing block ${locator.blockId}`);
-    return Readable.from(block.subarray(locator.byteOffset));
+    const path = blockFilePath(barcode, locator.blockId);
+    try {
+      await stat(path);
+    } catch {
+      throw new Error(`Missing block ${locator.blockId} on tape ${barcode}`);
+    }
+    return createReadStream(path);
   }
 }

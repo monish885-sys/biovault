@@ -4,6 +4,7 @@ import { createApp } from "./app.js";
 import { config } from "./config.js";
 import { connectMongo } from "./db/connect.js";
 import "./db/schemas/index.js";
+import { startIngestWorker } from "./modules/ingest/ingest.worker.js";
 import { getRedis } from "./redis.js";
 
 const log = createLogger("sentinel-api", config.logLevel);
@@ -12,6 +13,7 @@ async function main() {
   await mkdir(config.stagingPath, { recursive: true });
   await connectMongo();
   getRedis();
+  startIngestWorker();
 
   const app = createApp();
   app.listen(config.port, () => {

@@ -3,6 +3,7 @@ import { createLogger } from "@biovault/common";
 import { config } from "../config.js";
 import { connectMongo, disconnectMongo } from "./connect.js";
 import { ClientModel } from "./schemas/client.js";
+import { TapeModel } from "./schemas/tape.js";
 import { UserModel } from "./schemas/user.js";
 import "./schemas/index.js";
 
@@ -55,6 +56,29 @@ async function main() {
     },
     { upsert: true, new: true },
   );
+
+  const seedTapes = [
+    { barcode: "TAPE-ACME-001", rack: "R1", slot: "S01" },
+    { barcode: "TAPE-ACME-002", rack: "R1", slot: "S02" },
+  ];
+  for (const tape of seedTapes) {
+    await TapeModel.findOneAndUpdate(
+      { barcode: tape.barcode },
+      {
+        $setOnInsert: {
+          barcode: tape.barcode,
+          rack: tape.rack,
+          slot: tape.slot,
+          status: "empty",
+          fillPercent: 0,
+          healthScore: "green",
+          writeCycles: 0,
+        },
+      },
+      { upsert: true },
+    );
+    log.info("tape ready", { barcode: tape.barcode, rack: tape.rack, slot: tape.slot });
+  }
 
   for (const seed of SEED_USERS) {
     const clientId =

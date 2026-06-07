@@ -123,38 +123,147 @@ paths:
   /api/v1/ingest/jobs:
     post:
       tags: [ingest]
-      summary: Create ingest job (stub — Day 3)
+      summary: Create ingest job from multipart file upload
       operationId: createIngestJob
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                category:
+                  type: string
+                  description: File category label (defaults to general)
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "201":
+          description: Ingest job created and files indexed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestJobResponse"
+        "400":
+          description: Validation error
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+    get:
+      tags: [ingest]
+      summary: List ingest jobs for current client (not implemented — use GET by id)
+      operationId: listIngestJobs
       security:
         - cookieAuth: []
       responses:
         "501":
           description: Not implemented yet
+  /api/v1/ingest/jobs/{jobId}:
+    get:
+      tags: [ingest]
+      summary: Get ingest job status (client-visible; no tape location)
+      operationId: getIngestJob
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ingest job detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestJobResponse"
+        "404":
+          description: Job not found
+  /api/v1/ingest/jobs/{jobId}/report:
+    get:
+      tags: [ingest]
+      summary: Get sealed ingest confirmation report
+      operationId: getIngestReport
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ingest confirmation report (sealed jobs only)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestReportResponse"
+        "404":
+          description: Job not found or not yet sealed
   /api/v1/search/files:
     get:
       tags: [search]
-      summary: Search indexed files (stub — Day 6)
+      summary: Search indexed archived files (client metadata only)
       operationId: searchFiles
       security:
         - cookieAuth: []
       parameters:
         - name: q
           in: query
+          description: Filename or keyword token search (tenant-scoped HMAC tokens)
           schema:
             type: string
         - name: from
           in: query
+          description: Ingest date lower bound (inclusive, YYYY-MM-DD)
           schema:
             type: string
             format: date
         - name: to
           in: query
+          description: Ingest date upper bound (inclusive, YYYY-MM-DD)
           schema:
             type: string
             format: date
+        - name: fileType
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
-        "501":
-          description: Not implemented yet
+        "200":
+          description: Matching archived files (no tape location)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSearchResponse"
+        "400":
+          description: Invalid query parameters
   /api/v1/retrieval/jobs:
     post:
       tags: [jobs]
@@ -312,3 +421,100 @@ components:
               type: string
             slot:
               type: string
+    FileSearchResponse:
+      type: object
+      description: Client file search results (no tape barcode, rack, or slot)
+      required: [files, total]
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientFileSearchResult"
+        total:
+          type: integer
+          minimum: 0
+    IngestFileSummary:
+      type: object
+      description: Indexed file metadata (no tape location)
+      required: [id, filename, fileType, category, sizeBytes, checksumSha256, status]
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        fileType:
+          type: string
+        category:
+          type: string
+        sizeBytes:
+          type: integer
+        checksumSha256:
+          type: string
+        status:
+          type: string
+          enum: [indexing, on_tape, pending_deletion, deleted]
+    IngestJobSummary:
+      type: object
+      description: Client-visible ingest job (no tape barcode/rack/slot)
+      required: [id, status, fileCount, totalBytes, createdAt, files]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [received, indexing, writing, verifying, sealed, failed]
+        fileCount:
+          type: integer
+        totalBytes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngestFileSummary"
+    IngestJobResponse:
+      type: object
+      required: [job]
+      properties:
+        job:
+          $ref: "#/components/schemas/IngestJobSummary"
+    IngestReportFile:
+      allOf:
+        - $ref: "#/components/schemas/IngestFileSummary"
+        - type: object
+          required: [verified]
+          properties:
+            verified:
+              type: boolean
+    IngestReport:
+      type: object
+      description: Client ingest confirmation after tape verify (no tape location)
+      required: [jobId, status, fileCount, totalBytes, createdAt, files]
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [sealed]
+        fileCount:
+          type: integer
+        totalBytes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        sealedAt:
+          type: string
+          format: date-time
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngestReportFile"
+    IngestReportResponse:
+      type: object
+      required: [report]
+      properties:
+        report:
+          $ref: "#/components/schemas/IngestReport"

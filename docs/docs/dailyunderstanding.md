@@ -9,7 +9,7 @@
 - Backend: Node 22 (Strict ESM), Express 5, TypeScript 5.x.
 - Database: MongoDB 7 (Mongoose schemas), Redis + BullMQ (For background tape jobs).
 - Frontend: React 19, Vite, Tailwind CSS 4.
-- Abstraction: `TapeLibraryAdapter` handles all operations. Simulator uses `mhvtl` or custom memory streams.
+- Abstraction: `TapeLibraryAdapter` handles all operations. Simulator writes blocks to disk under `STAGING_PATH/tape-sim/`.
 
 ## 3. Scope Cut-Offs (Strictly Forbidden)
 - NO DNA translation, AGCT encoding, or wet-lab biology software blocks.

@@ -113,10 +113,45 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List ingest jobs for current client (not implemented — use GET by id) */
+        get: operations["listIngestJobs"];
         put?: never;
-        /** Create ingest job (stub — Day 3) */
+        /** Create ingest job from multipart file upload */
         post: operations["createIngestJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingest/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get ingest job status (client-visible; no tape location) */
+        get: operations["getIngestJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingest/jobs/{jobId}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get sealed ingest confirmation report */
+        get: operations["getIngestReport"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -130,7 +165,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search indexed files (stub — Day 6) */
+        /** Search indexed archived files (client metadata only) */
         get: operations["searchFiles"];
         put?: never;
         post?: never;
@@ -254,6 +289,55 @@ export interface components {
             tapeBarcode?: string;
             rack?: string;
             slot?: string;
+        };
+        /** @description Client file search results (no tape barcode, rack, or slot) */
+        FileSearchResponse: {
+            files: components["schemas"]["ClientFileSearchResult"][];
+            total: number;
+        };
+        /** @description Indexed file metadata (no tape location) */
+        IngestFileSummary: {
+            id: string;
+            filename: string;
+            fileType: string;
+            category: string;
+            sizeBytes: number;
+            checksumSha256: string;
+            /** @enum {string} */
+            status: "indexing" | "on_tape" | "pending_deletion" | "deleted";
+        };
+        /** @description Client-visible ingest job (no tape barcode/rack/slot) */
+        IngestJobSummary: {
+            id: string;
+            /** @enum {string} */
+            status: "received" | "indexing" | "writing" | "verifying" | "sealed" | "failed";
+            fileCount: number;
+            totalBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+            files: components["schemas"]["IngestFileSummary"][];
+        };
+        IngestJobResponse: {
+            job: components["schemas"]["IngestJobSummary"];
+        };
+        IngestReportFile: components["schemas"]["IngestFileSummary"] & {
+            verified: boolean;
+        };
+        /** @description Client ingest confirmation after tape verify (no tape location) */
+        IngestReport: {
+            jobId: string;
+            /** @enum {string} */
+            status: "sealed";
+            fileCount: number;
+            totalBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            sealedAt?: string;
+            files: components["schemas"]["IngestReportFile"][];
+        };
+        IngestReportResponse: {
+            report: components["schemas"]["IngestReport"];
         };
     };
     responses: never;
@@ -446,7 +530,7 @@ export interface operations {
             };
         };
     };
-    createIngestJob: {
+    listIngestJobs: {
         parameters: {
             query?: never;
             header?: never;
@@ -464,12 +548,126 @@ export interface operations {
             };
         };
     };
+    createIngestJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** @description File category label (defaults to general) */
+                    category?: string;
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Ingest job created and files indexed */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestJobResponse"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getIngestJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ingest job detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestJobResponse"];
+                };
+            };
+            /** @description Job not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getIngestReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ingest confirmation report (sealed jobs only) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestReportResponse"];
+                };
+            };
+            /** @description Job not found or not yet sealed */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     searchFiles: {
         parameters: {
             query?: {
+                /** @description Filename or keyword token search (tenant-scoped HMAC tokens) */
                 q?: string;
+                /** @description Ingest date lower bound (inclusive, YYYY-MM-DD) */
                 from?: string;
+                /** @description Ingest date upper bound (inclusive, YYYY-MM-DD) */
                 to?: string;
+                fileType?: string;
+                category?: string;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -477,8 +675,17 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Not implemented yet */
-            501: {
+            /** @description Matching archived files (no tape location) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileSearchResponse"];
+                };
+            };
+            /** @description Invalid query parameters */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

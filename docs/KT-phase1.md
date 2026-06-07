@@ -435,10 +435,10 @@ interface TapeLibraryAdapter {
 
 - [x] **D1** — Scaffold, `.cursorrules`, Mongo schemas, OpenAPI, Compose
 - [x] **D2** — Auth + RBAC (client + internal roles)
-- [ ] **D3** — Ingest intake, SHA-256, metadata indexing
-- [ ] **D4** — Tape sim write, barcode/slot catalog, post-write verify
-- [ ] **D5** — Ingest jobs, tape fill, client ingest report
-- [ ] **D6** — Client search API (no rack/slot to client)
+- [x] **D3** — Ingest intake, SHA-256, metadata indexing
+- [x] **D4** — Tape sim write, barcode/slot catalog, `file_locations`
+- [x] **D5** — Read-back verify, job `sealed`, ingest report API
+- [x] **D6** — Client search API (no rack/slot to client)
 - [ ] **D7** — Retrieval queue, 60s alert, 15m SLA timer
 - [ ] **D8** — Admin job queue + technician view
 - [ ] **D9** — Staging + time-limited download + purge

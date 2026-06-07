@@ -4,7 +4,9 @@ const fileSchema = new Schema(
   {
     clientId: { type: Types.ObjectId, ref: "Client", required: true, index: true },
     ingestJobId: { type: Types.ObjectId, ref: "IngestJob", index: true },
-    filename: { type: String, required: true, index: true },
+    filename: { type: String, required: true },
+    filenameSearchTokens: [{ type: String }],
+    keywordSearchTokens: [{ type: String }],
     fileType: { type: String, required: true },
     category: { type: String, required: true, index: true },
     sizeBytes: { type: Number, required: true },
@@ -21,7 +23,8 @@ const fileSchema = new Schema(
   { timestamps: true },
 );
 
-fileSchema.index({ clientId: 1, filename: 1 });
+fileSchema.index({ clientId: 1, filenameSearchTokens: 1 });
+fileSchema.index({ clientId: 1, keywordSearchTokens: 1 });
 fileSchema.index({ clientId: 1, category: 1, createdAt: -1 });
 
 export type FileDocument = InferSchemaType<typeof fileSchema>;

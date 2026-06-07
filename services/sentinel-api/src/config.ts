@@ -13,6 +13,7 @@ export const config = {
   stagingPath: env("STAGING_PATH", "./staging"),
   tapeAdapter: (process.env.TAPE_ADAPTER ?? "sim") as "sim" | "mtx" | "scalar",
   sessionSecret: env("SESSION_SECRET", "dev-only-change-in-production"),
+  searchTokenSecret: env("SEARCH_TOKEN_SECRET", "dev-only-search-token-secret"),
   sessionTtlSeconds: Number(process.env.SESSION_TTL_SECONDS ?? "28800"),
   logLevel: (process.env.LOG_LEVEL ?? "info") as "debug" | "info" | "warn" | "error",
   corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:5174")

@@ -99,6 +99,23 @@ vi.mock("../../db/schemas/audit-event.js", () => ({
   },
 }));
 
+vi.mock("../../db/schemas/file.js", () => ({
+  FileModel: {
+    find: vi.fn(() => ({
+      sort: vi.fn(() => ({
+        skip: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            select: vi.fn(() => ({
+              lean: vi.fn(async () => []),
+            })),
+          })),
+        })),
+      })),
+    })),
+    countDocuments: vi.fn(async () => 0),
+  },
+}));
+
 vi.mock("../../db/connect.js", () => ({
   connectMongo: vi.fn(),
   disconnectMongo: vi.fn(),
@@ -145,12 +162,14 @@ describe("auth + RBAC integration", () => {
     expect(res.headers["set-cookie"]?.join(";")).toContain("sentinel_session");
   });
 
-  it("allows client_admin through RBAC to search stub", async () => {
+  it("allows client_admin through RBAC to search archived files", async () => {
     const app = createApp();
     const agent = request.agent(app);
     await agent.post("/api/v1/auth/login").send({ email: "admin@acme.test", password: PASSWORD });
     const res = await agent.get("/api/v1/search/files");
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("files");
+    expect(res.body).toHaveProperty("total");
   });
 
   it("blocks client_viewer from ingest (admin-only)", async () => {

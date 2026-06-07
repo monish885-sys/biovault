@@ -20,6 +20,7 @@ export function isKnownRole(role: string): role is UserRole {
 /** Route-level RBAC for Day 2+ stubs and live handlers */
 export const ROUTE_ROLES = {
   ingestCreate: ["client_admin"] as const,
+  ingestRead: CLIENT_ROLES,
   searchRead: CLIENT_ROLES,
   retrievalCreate: ["client_admin", "compliance_officer"] as const,
   adminOps: INTERNAL_ROLES,
