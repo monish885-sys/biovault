@@ -439,10 +439,10 @@ interface TapeLibraryAdapter {
 - [x] **D4** — Tape sim write, barcode/slot catalog, `file_locations`
 - [x] **D5** — Read-back verify, job `sealed`, ingest report API
 - [x] **D6** — Client search API (no rack/slot to client)
-- [ ] **D7** — Retrieval queue, 60s alert, 15m SLA timer
-- [ ] **D8** — Admin job queue + technician view
-- [ ] **D9** — Staging + time-limited download + purge
-- [ ] **D10** — Tape inventory, fill %, health scores
+- [x] **D7** — Retrieval queue, 60s alert, 15m SLA timer
+- [x] **D8** — Admin job queue + technician view
+- [x] **D9** — Staging + time-limited download + purge
+- [x] **D10** — Tape inventory, fill %, health scores
 - [ ] **D11** — Audit log + signed PDF certificates
 - [ ] **D12** — Client portal UI
 - [ ] **D13** — Admin portal UI

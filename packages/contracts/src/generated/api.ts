@@ -182,10 +182,45 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List retrieval jobs for current client (tracker) */
+        get: operations["listRetrievalJobs"];
         put?: never;
-        /** Request file retrieval (stub — Day 7) */
+        /** Request file retrieval */
         post: operations["createRetrievalJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/retrieval/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get retrieval job status for current client */
+        get: operations["getRetrievalJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/retrieval/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download retrieved file via signed time-limited token */
+        get: operations["downloadRetrievalFile"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -199,10 +234,44 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List ops jobs with SLA (stub — Day 8) */
+        /** List ops retrieval jobs with SLA countdown */
         get: operations["listAdminJobs"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update retrieval job status (assign, in_progress) */
+        patch: operations["updateAdminRetrievalJob"];
+        trace?: never;
+    };
+    "/api/v1/admin/jobs/{jobId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete retrieval — copy from tape to staging and issue download link */
+        post: operations["completeAdminRetrievalJob"];
         delete?: never;
         options?: never;
         head?: never;
@@ -216,7 +285,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Tape inventory (stub — Day 10) */
+        /** Tape inventory with fill percent and health scores */
         get: operations["listTapes"];
         put?: never;
         post?: never;
@@ -338,6 +407,117 @@ export interface components {
         };
         IngestReportResponse: {
             report: components["schemas"]["IngestReport"];
+        };
+        CreateRetrievalJobRequest: {
+            /** @description Indexed file identifier (must be on_tape) */
+            fileId: string;
+        };
+        /** @description Client-visible retrieval job (no tape barcode, rack, or slot) */
+        ClientRetrievalJobSummary: {
+            id: string;
+            fileId: string;
+            filename: string;
+            fileType: string;
+            category: string;
+            /** @enum {string} */
+            status: "pending" | "assigned" | "in_progress" | "ready" | "delivered" | "expired" | "failed";
+            /** Format: date-time */
+            dueAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Seconds until SLA deadline (negative when overdue) */
+            slaRemainingSeconds: number;
+            slaOverdue: boolean;
+            /** @description Signed download path when status is ready */
+            downloadUrl?: string;
+            /**
+             * Format: date-time
+             * @description Download link expiry when status is ready
+             */
+            downloadExpiresAt?: string;
+        };
+        RetrievalJobResponse: {
+            job: components["schemas"]["ClientRetrievalJobSummary"];
+        };
+        RetrievalJobListResponse: {
+            jobs: components["schemas"]["ClientRetrievalJobSummary"][];
+            total: number;
+        };
+        AdminTapeLocation: {
+            tapeBarcode: string;
+            rack: string;
+            slot: string;
+        };
+        /** @description Internal ops view with tape location and SLA countdown */
+        AdminRetrievalJobSummary: {
+            id: string;
+            clientId: string;
+            clientName: string;
+            fileId: string;
+            filename: string;
+            fileType: string;
+            category: string;
+            /** @enum {string} */
+            status: "pending" | "assigned" | "in_progress" | "ready" | "delivered" | "expired" | "failed";
+            /** Format: date-time */
+            dueAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            slaRemainingSeconds: number;
+            slaOverdue: boolean;
+            /** @description Requester email or user id */
+            requestedBy: string;
+            /** @description Assignee email when set */
+            assignedTo?: string;
+            tape?: components["schemas"]["AdminTapeLocation"];
+        };
+        AdminJobListResponse: {
+            jobs: components["schemas"]["AdminRetrievalJobSummary"][];
+            total: number;
+        };
+        UpdateAdminRetrievalJobRequest: {
+            /** @enum {string} */
+            status: "assigned" | "in_progress";
+        };
+        AdminRetrievalJobStatusResponse: {
+            job: {
+                id: string;
+                status: string;
+            };
+        };
+        CompleteRetrievalJobResponse: {
+            job: {
+                id: string;
+                /** @enum {string} */
+                status: "ready";
+                downloadUrl: string;
+                /** Format: date-time */
+                downloadExpiresAt: string;
+            };
+        };
+        AdminTapeSummary: {
+            barcode: string;
+            rack: string;
+            slot: string;
+            /** @enum {string} */
+            status: "empty" | "writing" | "active" | "full" | "retired";
+            fillPercent: number;
+            /** @enum {string} */
+            healthScore: "green" | "amber" | "red";
+            writeCycles: number;
+            ageDays: number;
+            /** Format: date-time */
+            purchasedAt?: string;
+            /** Format: date-time */
+            sealedAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        TapeListResponse: {
+            tapes: components["schemas"]["AdminTapeSummary"][];
+            total: number;
         };
     };
     responses: never;
@@ -693,6 +873,44 @@ export interface operations {
             };
         };
     };
+    listRetrievalJobs: {
+        parameters: {
+            query?: {
+                status?: "pending" | "assigned" | "in_progress" | "ready" | "delivered" | "expired" | "failed";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Client retrieval jobs (no tape location) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrievalJobListResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     createRetrievalJob: {
         parameters: {
             query?: never;
@@ -700,10 +918,110 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRetrievalJobRequest"];
+            };
+        };
+        responses: {
+            /** @description Retrieval job created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrievalJobResponse"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getRetrievalJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
         requestBody?: never;
         responses: {
-            /** @description Not implemented yet */
-            501: {
+            /** @description Retrieval job detail (no tape location) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrievalJobResponse"];
+                };
+            };
+            /** @description Job not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    downloadRetrievalFile: {
+        parameters: {
+            query: {
+                /** @description HMAC-signed download token issued when job is ready */
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description File stream (application/octet-stream) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Invalid or expired token */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Staged file not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -713,15 +1031,120 @@ export interface operations {
     };
     listAdminJobs: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: "pending" | "assigned" | "in_progress" | "ready" | "delivered" | "expired" | "failed";
+                /** @description When true, only active jobs past dueAt */
+                overdue?: boolean;
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Not implemented yet */
-            501: {
+            /** @description Internal ops job queue with tape location and SLA timers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminJobListResponse"];
+                };
+            };
+            /** @description Invalid query parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateAdminRetrievalJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAdminRetrievalJobRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated job status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRetrievalJobStatusResponse"];
+                };
+            };
+            /** @description Invalid status transition */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Job not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    completeAdminRetrievalJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job ready with signed download URL */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompleteRetrievalJobResponse"];
+                };
+            };
+            /** @description Job not in completable state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Job not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -738,8 +1161,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Not implemented yet */
-            501: {
+            /** @description Tape inventory for ops */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TapeListResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

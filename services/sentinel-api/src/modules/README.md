@@ -6,9 +6,9 @@
 | clients | `clients/` | Day 2 ✅ |
 | ingest | `ingest/` | D3–D5 ✅ |
 | search | `search/` | Day 6 ✅ |
-| jobs | `jobs/` | Day 7–8 |
-| tapes | `tapes/` | Day 10 |
-| retrieval | `retrieval/` | Days 7–9 |
+| jobs | `jobs/` | Day 7–9 ✅ |
+| tapes | `tapes/` | Day 10 ✅ |
+| retrieval | `retrieval/` | Days 7–9 ✅ |
 | certificates | `certificates/` | Day 11 |
 | audit | `audit/` | Day 11 |
 | notifications | `notifications/` | Day 8+ |

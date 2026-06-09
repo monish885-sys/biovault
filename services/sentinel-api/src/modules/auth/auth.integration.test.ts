@@ -45,6 +45,11 @@ vi.mock("../../db/schemas/user.js", () => ({
         return all.find((u) => String(u._id) === String(id)) ?? null;
       }),
     })),
+    find: vi.fn(() => ({
+      select: vi.fn(() => ({
+        lean: vi.fn(async () => []),
+      })),
+    })),
   },
   CLIENT_ROLES: ["client_admin", "client_viewer", "compliance_officer"],
   INTERNAL_ROLES: ["ops_admin", "technician"],
@@ -69,6 +74,11 @@ vi.mock("../../db/schemas/client.js", () => ({
         dataCategories: ["imaging"],
         onboardingComplete: false,
         active: true,
+      })),
+    })),
+    find: vi.fn(() => ({
+      select: vi.fn(() => ({
+        lean: vi.fn(async () => []),
       })),
     })),
     findOneAndUpdate: vi.fn(() => ({
@@ -111,8 +121,42 @@ vi.mock("../../db/schemas/file.js", () => ({
           })),
         })),
       })),
+      select: vi.fn(() => ({
+        lean: vi.fn(async () => []),
+      })),
     })),
     countDocuments: vi.fn(async () => 0),
+  },
+}));
+
+vi.mock("../../db/schemas/retrieval-job.js", () => ({
+  RetrievalJobModel: {
+    find: vi.fn(() => ({
+      sort: vi.fn(() => ({
+        skip: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            lean: vi.fn(async () => []),
+          })),
+        })),
+      })),
+    })),
+    countDocuments: vi.fn(async () => 0),
+  },
+}));
+
+vi.mock("../../db/schemas/file-location.js", () => ({
+  FileLocationModel: {
+    find: vi.fn(async () => []),
+  },
+}));
+
+vi.mock("../../db/schemas/tape.js", () => ({
+  TapeModel: {
+    find: vi.fn(() => ({
+      select: vi.fn(() => ({
+        lean: vi.fn(async () => []),
+      })),
+    })),
   },
 }));
 
@@ -181,12 +225,14 @@ describe("auth + RBAC integration", () => {
     expect(res.body.error).toBe("FORBIDDEN");
   });
 
-  it("allows ops_admin to admin jobs stub", async () => {
+  it("allows ops_admin to list admin jobs", async () => {
     const app = createApp();
     const agent = request.agent(app);
     await agent.post("/api/v1/auth/login").send({ email: "ops@biovault.test", password: PASSWORD });
     const res = await agent.get("/api/v1/admin/jobs");
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("jobs");
+    expect(res.body).toHaveProperty("total");
   });
 
   it("blocks client from admin routes", async () => {

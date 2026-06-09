@@ -5,6 +5,7 @@ import { config } from "./config.js";
 import { connectMongo } from "./db/connect.js";
 import "./db/schemas/index.js";
 import { startIngestWorker } from "./modules/ingest/ingest.worker.js";
+import { startRetrievalWorker } from "./modules/retrieval/retrieval.worker.js";
 import { getRedis } from "./redis.js";
 
 const log = createLogger("sentinel-api", config.logLevel);
@@ -14,6 +15,7 @@ async function main() {
   await connectMongo();
   getRedis();
   startIngestWorker();
+  startRetrievalWorker();
 
   const app = createApp();
   app.listen(config.port, () => {

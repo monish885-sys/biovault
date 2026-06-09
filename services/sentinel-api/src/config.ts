@@ -14,6 +14,8 @@ export const config = {
   tapeAdapter: (process.env.TAPE_ADAPTER ?? "sim") as "sim" | "mtx" | "scalar",
   sessionSecret: env("SESSION_SECRET", "dev-only-change-in-production"),
   searchTokenSecret: env("SEARCH_TOKEN_SECRET", "dev-only-search-token-secret"),
+  downloadTokenSecret: env("DOWNLOAD_TOKEN_SECRET", "dev-only-download-token-secret"),
+  downloadTtlSeconds: Number(process.env.DOWNLOAD_TTL_SECONDS ?? "3600"),
   sessionTtlSeconds: Number(process.env.SESSION_TTL_SECONDS ?? "28800"),
   logLevel: (process.env.LOG_LEVEL ?? "info") as "debug" | "info" | "warn" | "error",
   corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:5174")

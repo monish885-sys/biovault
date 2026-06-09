@@ -12,6 +12,7 @@ import { hashReadableStream } from "../../lib/stream-hash.js";
 import { buildFilenameSearchTokens } from "../../search/filename-tokens.js";
 import { buildKeywordSearchTokens } from "../../search/keyword-tokens.js";
 import { getTapeAdapter } from "../../tape/index.js";
+import { computeTapeHealthScore } from "../tapes/health.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
 import { enqueueTapeWrite } from "./ingest.queue.js";
 import { parseMultipart, type StagedUpload } from "./multipart.js";
@@ -329,6 +330,7 @@ export async function processTapeWrite(ingestJobId: string): Promise<void> {
     const addedFill = Math.round((bytesWritten / tapeCapacityBytes) * 100);
     tape.fillPercent = Math.min(100, tape.fillPercent + addedFill);
     tape.writeCycles += 1;
+    tape.healthScore = computeTapeHealthScore(tape);
     await tape.save();
 
     job.status = "verifying";

@@ -267,33 +267,229 @@ paths:
   /api/v1/retrieval/jobs:
     post:
       tags: [jobs]
-      summary: Request file retrieval (stub — Day 7)
+      summary: Request file retrieval
       operationId: createRetrievalJob
       security:
         - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRetrievalJobRequest"
       responses:
-        "501":
-          description: Not implemented yet
+        "201":
+          description: Retrieval job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrievalJobResponse"
+        "400":
+          description: Validation error
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: File not found
+    get:
+      tags: [jobs]
+      summary: List retrieval jobs for current client (tracker)
+      operationId: listRetrievalJobs
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, assigned, in_progress, ready, delivered, expired, failed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Client retrieval jobs (no tape location)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrievalJobListResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+  /api/v1/retrieval/jobs/{jobId}:
+    get:
+      tags: [jobs]
+      summary: Get retrieval job status for current client
+      operationId: getRetrievalJob
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retrieval job detail (no tape location)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrievalJobResponse"
+        "404":
+          description: Job not found
+  /api/v1/retrieval/download:
+    get:
+      tags: [jobs]
+      summary: Download retrieved file via signed time-limited token
+      operationId: downloadRetrievalFile
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: HMAC-signed download token issued when job is ready
+      responses:
+        "200":
+          description: File stream (application/octet-stream)
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid or expired token
+        "404":
+          description: Staged file not found
   /api/v1/admin/jobs:
     get:
       tags: [jobs]
-      summary: List ops jobs with SLA (stub — Day 8)
+      summary: List ops retrieval jobs with SLA countdown
       operationId: listAdminJobs
       security:
         - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, assigned, in_progress, ready, delivered, expired, failed]
+        - name: overdue
+          in: query
+          description: When true, only active jobs past dueAt
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
-        "501":
-          description: Not implemented yet
+        "200":
+          description: Internal ops job queue with tape location and SLA timers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminJobListResponse"
+        "400":
+          description: Invalid query parameters
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+  /api/v1/admin/jobs/{jobId}:
+    patch:
+      tags: [jobs]
+      summary: Update retrieval job status (assign, in_progress)
+      operationId: updateAdminRetrievalJob
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminRetrievalJobRequest"
+      responses:
+        "200":
+          description: Updated job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRetrievalJobStatusResponse"
+        "400":
+          description: Invalid status transition
+        "404":
+          description: Job not found
+  /api/v1/admin/jobs/{jobId}/complete:
+    post:
+      tags: [jobs]
+      summary: Complete retrieval — copy from tape to staging and issue download link
+      operationId: completeAdminRetrievalJob
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job ready with signed download URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompleteRetrievalJobResponse"
+        "400":
+          description: Job not in completable state
+        "404":
+          description: Job not found
   /api/v1/admin/tapes:
     get:
       tags: [tapes]
-      summary: Tape inventory (stub — Day 10)
+      summary: Tape inventory with fill percent and health scores
       operationId: listTapes
       security:
         - cookieAuth: []
       responses:
-        "501":
-          description: Not implemented yet
+        "200":
+          description: Tape inventory for ops
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TapeListResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
 components:
   securitySchemes:
     cookieAuth:
@@ -518,3 +714,243 @@ components:
       properties:
         report:
           $ref: "#/components/schemas/IngestReport"
+    CreateRetrievalJobRequest:
+      type: object
+      required: [fileId]
+      properties:
+        fileId:
+          type: string
+          description: Indexed file identifier (must be on_tape)
+    ClientRetrievalJobSummary:
+      type: object
+      description: Client-visible retrieval job (no tape barcode, rack, or slot)
+      required:
+        - id
+        - fileId
+        - filename
+        - fileType
+        - category
+        - status
+        - dueAt
+        - createdAt
+        - slaRemainingSeconds
+        - slaOverdue
+      properties:
+        id:
+          type: string
+        fileId:
+          type: string
+        filename:
+          type: string
+        fileType:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [pending, assigned, in_progress, ready, delivered, expired, failed]
+        dueAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        slaRemainingSeconds:
+          type: integer
+          description: Seconds until SLA deadline (negative when overdue)
+        slaOverdue:
+          type: boolean
+        downloadUrl:
+          type: string
+          description: Signed download path when status is ready
+        downloadExpiresAt:
+          type: string
+          format: date-time
+          description: Download link expiry when status is ready
+    RetrievalJobResponse:
+      type: object
+      required: [job]
+      properties:
+        job:
+          $ref: "#/components/schemas/ClientRetrievalJobSummary"
+    RetrievalJobListResponse:
+      type: object
+      required: [jobs, total]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientRetrievalJobSummary"
+        total:
+          type: integer
+          minimum: 0
+    AdminTapeLocation:
+      type: object
+      required: [tapeBarcode, rack, slot]
+      properties:
+        tapeBarcode:
+          type: string
+        rack:
+          type: string
+        slot:
+          type: string
+    AdminRetrievalJobSummary:
+      type: object
+      description: Internal ops view with tape location and SLA countdown
+      required:
+        - id
+        - clientId
+        - clientName
+        - fileId
+        - filename
+        - fileType
+        - category
+        - status
+        - dueAt
+        - createdAt
+        - slaRemainingSeconds
+        - slaOverdue
+        - requestedBy
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        clientName:
+          type: string
+        fileId:
+          type: string
+        filename:
+          type: string
+        fileType:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [pending, assigned, in_progress, ready, delivered, expired, failed]
+        dueAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        slaRemainingSeconds:
+          type: integer
+        slaOverdue:
+          type: boolean
+        requestedBy:
+          type: string
+          description: Requester email or user id
+        assignedTo:
+          type: string
+          description: Assignee email when set
+        tape:
+          $ref: "#/components/schemas/AdminTapeLocation"
+    AdminJobListResponse:
+      type: object
+      required: [jobs, total]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminRetrievalJobSummary"
+        total:
+          type: integer
+          minimum: 0
+    UpdateAdminRetrievalJobRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [assigned, in_progress]
+    AdminRetrievalJobStatusResponse:
+      type: object
+      required: [job]
+      properties:
+        job:
+          type: object
+          required: [id, status]
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+    CompleteRetrievalJobResponse:
+      type: object
+      required: [job]
+      properties:
+        job:
+          type: object
+          required: [id, status, downloadUrl, downloadExpiresAt]
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+              enum: [ready]
+            downloadUrl:
+              type: string
+            downloadExpiresAt:
+              type: string
+              format: date-time
+    AdminTapeSummary:
+      type: object
+      required:
+        - barcode
+        - rack
+        - slot
+        - status
+        - fillPercent
+        - healthScore
+        - writeCycles
+        - ageDays
+        - createdAt
+        - updatedAt
+      properties:
+        barcode:
+          type: string
+        rack:
+          type: string
+        slot:
+          type: string
+        status:
+          type: string
+          enum: [empty, writing, active, full, retired]
+        fillPercent:
+          type: number
+          minimum: 0
+          maximum: 100
+        healthScore:
+          type: string
+          enum: [green, amber, red]
+        writeCycles:
+          type: integer
+          minimum: 0
+        ageDays:
+          type: integer
+          minimum: 0
+        purchasedAt:
+          type: string
+          format: date-time
+        sealedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TapeListResponse:
+      type: object
+      required: [tapes, total]
+      properties:
+        tapes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminTapeSummary"
+        total:
+          type: integer
+          minimum: 0
