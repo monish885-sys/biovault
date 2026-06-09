@@ -443,9 +443,9 @@ interface TapeLibraryAdapter {
 - [x] **D8** — Admin job queue + technician view
 - [x] **D9** — Staging + time-limited download + purge
 - [x] **D10** — Tape inventory, fill %, health scores
-- [ ] **D11** — Audit log + signed PDF certificates
-- [ ] **D12** — Client portal UI
-- [ ] **D13** — Admin portal UI
+- [x] **D11** — Audit log + signed PDF certificates
+- [x] **D12** — Client portal UI
+- [x] **D13** — Admin portal UI
 - [ ] **D14** — E2E demo, runbooks, `v0.1.0-mvp`
 - [ ] **Backlog** — Billing dashboard (Deliverable 7)
 - [ ] **Backlog** — Full DPDPA erasure + degauss + re-copy automation

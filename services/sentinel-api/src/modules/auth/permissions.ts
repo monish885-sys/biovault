@@ -26,4 +26,6 @@ export const ROUTE_ROLES = {
   adminOps: INTERNAL_ROLES,
   clientOnboarding: ["client_admin"] as const,
   clientProfile: CLIENT_ROLES,
+  auditExportClient: ["client_admin", "compliance_officer"] as const,
+  auditReadInternal: INTERNAL_ROLES,
 } as const;

@@ -21,4 +21,5 @@ export const config = {
   corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:5174")
     .split(",")
     .map((s) => s.trim()),
+  certSigningKeyPath: process.env.CERT_SIGNING_KEY_PATH,
 };

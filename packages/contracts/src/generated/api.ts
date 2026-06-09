@@ -158,6 +158,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ingest/jobs/{jobId}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get ingest confirmation certificate metadata */
+        get: operations["getIngestCertificate"];
+        put?: never;
+        /** Issue signed ingest confirmation PDF certificate */
+        post: operations["issueIngestCertificate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingest/jobs/{jobId}/certificate/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download signed ingest confirmation PDF */
+        get: operations["downloadIngestCertificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export tenant-scoped audit trail (client compliance) */
+        get: operations["exportClientAuditTrail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List audit events (ops) */
+        get: operations["listAuditEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export full audit trail with hash chain verification */
+        get: operations["exportAdminAuditTrail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/search/files": {
         parameters: {
             query?: never;
@@ -519,6 +605,51 @@ export interface components {
             tapes: components["schemas"]["AdminTapeSummary"][];
             total: number;
         };
+        AuditEventSummary: {
+            id: string;
+            action: string;
+            userId?: string;
+            clientId?: string;
+            ipAddress?: string;
+            payload: {
+                [key: string]: unknown;
+            };
+            payloadHash: string;
+            prevHash?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AuditEventListResponse: {
+            events: components["schemas"]["AuditEventSummary"][];
+            total: number;
+        };
+        AuditExportResponse: {
+            /** Format: date-time */
+            exportedAt: string;
+            chainValid: boolean;
+            eventCount: number;
+            events: components["schemas"]["AuditEventSummary"][];
+        };
+        CertificateSummary: {
+            id: string;
+            /** @enum {string} */
+            type: "ingest_summary" | "deletion_confirmation" | "audit_export";
+            clientId: string;
+            ingestJobId: string;
+            pdfSha256: string;
+            /** Format: date-time */
+            issuedAt: string;
+            metadata: {
+                algorithm: string;
+                signature: string;
+                contentHash: string;
+                fileCount: number;
+                totalBytes: number;
+            };
+        };
+        CertificateResponse: {
+            certificate: components["schemas"]["CertificateSummary"];
+        };
     };
     responses: never;
     parameters: never;
@@ -828,6 +959,209 @@ export interface operations {
             };
             /** @description Job not found or not yet sealed */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getIngestCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Certificate metadata */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateResponse"];
+                };
+            };
+            /** @description Certificate not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    issueIngestCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Certificate issued */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateResponse"];
+                };
+            };
+            /** @description Ingest job not found or not sealed */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    downloadIngestCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Signed PDF certificate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description Certificate not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    exportClientAuditTrail: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Immutable audit export with hash chain verification */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditExportResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listAuditEvents: {
+        parameters: {
+            query?: {
+                clientId?: string;
+                action?: string;
+                from?: string;
+                to?: string;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated audit events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventListResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    exportAdminAuditTrail: {
+        parameters: {
+            query?: {
+                clientId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Audit export */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditExportResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

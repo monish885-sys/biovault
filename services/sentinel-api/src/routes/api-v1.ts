@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { requireAuth, requireClientUser, requireInternalUser, requireRoles } from "../middleware/auth.js";
+import { auditRouter } from "../modules/audit/audit.routes.js";
+import { clientAuditRouter } from "../modules/audit/client-audit.routes.js";
 import { authRouter } from "../modules/auth/auth.routes.js";
 import { ROUTE_ROLES } from "../modules/auth/permissions.js";
+import { certificatesRouter } from "../modules/certificates/certificates.routes.js";
 import { clientsRouter } from "../modules/clients/clients.routes.js";
 import { ingestRouter } from "../modules/ingest/ingest.routes.js";
 import { adminJobsRouter } from "../modules/jobs/admin-jobs.routes.js";
@@ -18,6 +21,13 @@ apiV1Router.use(
   requireAuth,
   requireClientUser,
   ingestRouter,
+  certificatesRouter,
+);
+apiV1Router.use(
+  "/audit",
+  requireAuth,
+  requireClientUser,
+  clientAuditRouter,
 );
 apiV1Router.use(
   "/search",
@@ -39,4 +49,5 @@ const adminRouter = Router();
 adminRouter.use(requireAuth, requireInternalUser);
 adminRouter.use("/jobs", requireRoles(...ROUTE_ROLES.adminOps), adminJobsRouter);
 adminRouter.use("/tapes", requireRoles(...ROUTE_ROLES.adminOps), tapesRouter);
+adminRouter.use("/audit", requireRoles(...ROUTE_ROLES.auditReadInternal), auditRouter);
 apiV1Router.use("/admin", adminRouter);

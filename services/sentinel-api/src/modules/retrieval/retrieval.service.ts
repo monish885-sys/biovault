@@ -51,8 +51,8 @@ type JobLike = {
   status: string;
   dueAt: Date;
   createdAt?: Date;
-  downloadToken?: string;
-  downloadExpiresAt?: Date;
+  downloadToken?: string | null;
+  downloadExpiresAt?: Date | null;
 };
 
 function toClientSummary(

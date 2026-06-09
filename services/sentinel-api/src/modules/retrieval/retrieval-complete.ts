@@ -43,7 +43,7 @@ export async function updateAdminRetrievalJobStatus(
 
   job.status = nextStatus as typeof job.status;
   if (nextStatus === "assigned") {
-    job.assignedTo = new Types.ObjectId(userId);
+    job.set("assignedTo", new Types.ObjectId(userId));
   }
   await job.save();
 
@@ -113,7 +113,7 @@ export async function completeRetrievalJob(
   job.downloadExpiresAt = downloadExpiresAt;
   job.completedAt = new Date();
   if (!job.assignedTo) {
-    job.assignedTo = new Types.ObjectId(userId);
+    job.set("assignedTo", new Types.ObjectId(userId));
   }
   await job.save();
 

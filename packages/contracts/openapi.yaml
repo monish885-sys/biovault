@@ -15,6 +15,8 @@ tags:
   - name: search
   - name: jobs
   - name: tapes
+  - name: audit
+  - name: certificates
 paths:
   /health:
     get:
@@ -209,6 +211,184 @@ paths:
                 $ref: "#/components/schemas/IngestReportResponse"
         "404":
           description: Job not found or not yet sealed
+  /api/v1/ingest/jobs/{jobId}/certificate:
+    get:
+      tags: [certificates]
+      summary: Get ingest confirmation certificate metadata
+      operationId: getIngestCertificate
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Certificate metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateResponse"
+        "404":
+          description: Certificate not found
+    post:
+      tags: [certificates]
+      summary: Issue signed ingest confirmation PDF certificate
+      operationId: issueIngestCertificate
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Certificate issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateResponse"
+        "404":
+          description: Ingest job not found or not sealed
+  /api/v1/ingest/jobs/{jobId}/certificate/download:
+    get:
+      tags: [certificates]
+      summary: Download signed ingest confirmation PDF
+      operationId: downloadIngestCertificate
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Signed PDF certificate
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Certificate not found
+  /api/v1/audit/export:
+    get:
+      tags: [audit]
+      summary: Export tenant-scoped audit trail (client compliance)
+      operationId: exportClientAuditTrail
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Immutable audit export with hash chain verification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditExportResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+  /api/v1/admin/audit/events:
+    get:
+      tags: [audit]
+      summary: List audit events (ops)
+      operationId: listAuditEvents
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: clientId
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Paginated audit events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventListResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+  /api/v1/admin/audit/export:
+    get:
+      tags: [audit]
+      summary: Export full audit trail with hash chain verification
+      operationId: exportAdminAuditTrail
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: clientId
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Audit export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditExportResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
   /api/v1/search/files:
     get:
       tags: [search]
@@ -954,3 +1134,92 @@ components:
         total:
           type: integer
           minimum: 0
+    AuditEventSummary:
+      type: object
+      required: [id, action, payload, payloadHash, createdAt]
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        userId:
+          type: string
+        clientId:
+          type: string
+        ipAddress:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        payloadHash:
+          type: string
+        prevHash:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AuditEventListResponse:
+      type: object
+      required: [events, total]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEventSummary"
+        total:
+          type: integer
+          minimum: 0
+    AuditExportResponse:
+      type: object
+      required: [exportedAt, chainValid, eventCount, events]
+      properties:
+        exportedAt:
+          type: string
+          format: date-time
+        chainValid:
+          type: boolean
+        eventCount:
+          type: integer
+          minimum: 0
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEventSummary"
+    CertificateSummary:
+      type: object
+      required: [id, type, clientId, ingestJobId, pdfSha256, issuedAt, metadata]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [ingest_summary, deletion_confirmation, audit_export]
+        clientId:
+          type: string
+        ingestJobId:
+          type: string
+        pdfSha256:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          required: [algorithm, signature, contentHash, fileCount, totalBytes]
+          properties:
+            algorithm:
+              type: string
+            signature:
+              type: string
+            contentHash:
+              type: string
+            fileCount:
+              type: integer
+            totalBytes:
+              type: integer
+    CertificateResponse:
+      type: object
+      required: [certificate]
+      properties:
+        certificate:
+          $ref: "#/components/schemas/CertificateSummary"

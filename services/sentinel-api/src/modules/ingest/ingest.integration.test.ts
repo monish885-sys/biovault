@@ -92,6 +92,10 @@ vi.mock("../../db/schemas/client.js", () => ({
   },
 }));
 
+vi.mock("../certificates/certificates.service.js", () => ({
+  autoIssueIngestCertificate: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("../../db/schemas/audit-event.js", () => ({
   AuditEventModel: {
     findOne: vi.fn().mockReturnValue({

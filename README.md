@@ -31,9 +31,9 @@ pnpm --filter @biovault/sentinel-api db:seed
 # API (terminal 1)
 pnpm dev:api
 
-# Portals (optional)
-pnpm dev:client   # http://localhost:5173
-pnpm dev:admin    # http://localhost:5174
+# Portals (Day 12–13)
+pnpm dev:client   # http://localhost:5173 — search, request, tracker
+pnpm dev:admin    # http://localhost:5174 — job queue, SLA, complete retrieval
 ```
 
 Health check:
@@ -98,8 +98,8 @@ Copy `deploy/.env.example` to `deploy/.env` (or export for local dev).
 | **3–4** | `STAGING_PATH` writable directory |
 | **5** | `SEARCH_TOKEN_SECRET` — generate: `openssl rand -hex 32` (must differ from `SESSION_SECRET`) |
 | **6–10** | Same stack; no new secrets |
-| **11** | PDF signing key path (RSA or Ed25519 PEM) — add `CERT_SIGNING_KEY_PATH` when implementing certificates |
-| **12–13** | `VITE_API_URL` for portal dev |
+| **11** | `CERT_SIGNING_KEY_PATH` (optional — dev auto-generates Ed25519 in `STAGING_PATH`) |
+| **12–13** | Portals proxy `/api` in dev; set `VITE_API_URL` for production builds |
 | **14 (prod)** | Strong secrets for all of the above; real `TAPE_ADAPTER=mtx\|scalar` on ingest workstation |
 
 Seeded login (after `db:seed`): `admin@acme.test` / `ChangeMe123!`

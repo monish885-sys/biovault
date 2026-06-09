@@ -14,6 +14,7 @@ import { buildKeywordSearchTokens } from "../../search/keyword-tokens.js";
 import { getTapeAdapter } from "../../tape/index.js";
 import { computeTapeHealthScore } from "../tapes/health.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
+import { autoIssueIngestCertificate } from "../certificates/certificates.service.js";
 import { enqueueTapeWrite } from "./ingest.queue.js";
 import { parseMultipart, type StagedUpload } from "./multipart.js";
 import { ingestJobDir, stagedFilePath } from "./staging.js";
@@ -413,6 +414,8 @@ export async function processTapeVerify(ingestJobId: string): Promise<void> {
         fileIds: files.map((f) => String(f._id)),
       },
     });
+
+    await autoIssueIngestCertificate(String(job.clientId), String(job._id));
   } catch (err) {
     job.status = "failed";
     job.errorMessage = err instanceof Error ? err.message : "Tape verification failed";
