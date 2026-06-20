@@ -446,9 +446,10 @@ interface TapeLibraryAdapter {
 - [x] **D11** — Audit log + signed PDF certificates
 - [x] **D12** — Client portal UI
 - [x] **D13** — Admin portal UI
-- [ ] **D14** — E2E demo, runbooks, `v0.1.0-mvp`
-- [ ] **Backlog** — Billing dashboard (Deliverable 7)
-- [ ] **Backlog** — Full DPDPA erasure + degauss + re-copy automation
+- [x] **D14** — E2E demo, runbooks, `v0.1.0-mvp`
+- [x] **D15** — Billing dashboard (Deliverable 7)
+- [x] **D16** — DPDPA erasure workflow + deletion certificates
+- [ ] **Backlog** — Full MFA + onboarding wizard
 
 ### Operating rhythm
 

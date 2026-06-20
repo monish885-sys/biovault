@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { BillingPanel } from "./components/BillingPanel";
+import { CompliancePanel } from "./components/CompliancePanel";
 import { LoginForm } from "./components/LoginForm";
 import { RetrievalTracker } from "./components/RetrievalTracker";
 import { SearchPanel } from "./components/SearchPanel";
 import { authApi, type AuthUser } from "./lib/api";
 
-type Tab = "search" | "jobs";
+type Tab = "search" | "jobs" | "billing" | "compliance";
 
 export function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -89,6 +91,8 @@ export function App() {
           [
             ["search", "Search archive"],
             ["jobs", "Retrieval jobs"],
+            ["billing", "Billing"],
+            ["compliance", "Compliance"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -108,8 +112,12 @@ export function App() {
 
       {tab === "search" ? (
         <SearchPanel onJobCreated={() => setJobsKey((k) => k + 1)} />
-      ) : (
+      ) : tab === "jobs" ? (
         <RetrievalTracker key={jobsKey} />
+      ) : tab === "billing" ? (
+        <BillingPanel />
+      ) : (
+        <CompliancePanel />
       )}
     </div>
   );

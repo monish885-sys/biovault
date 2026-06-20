@@ -89,3 +89,45 @@ export function absoluteDownloadUrl(path: string): string {
   if (path.startsWith("http")) return path;
   return `${API_BASE}${path}`;
 }
+
+export type BillingSummary = {
+  tier: string;
+  storageBytes: number;
+  storageTb: number;
+  storageIncludedTb: number;
+  storageOverageTb: number;
+  retrievalsUsed: number;
+  retrievalsIncluded: number;
+  retrievalsOverage: number;
+  estimatedMonthlyInr: number;
+  cloudComparisonInr: number;
+  savingsVsCloudInr: number;
+  byCategory: Array<{ category: string; bytes: number; tb: number }>;
+};
+
+export type ErasureRequest = {
+  id: string;
+  subjectId: string;
+  reason: string;
+  searchQuery: string;
+  status: string;
+  matchedFileCount: number;
+  createdAt: string;
+  certificateId?: string;
+};
+
+export const billingApi = {
+  summary: () => apiFetch<{ summary: BillingSummary }>("/api/v1/billing/summary"),
+  invoice: () => apiFetch<{ invoice: unknown }>("/api/v1/billing/invoice"),
+};
+
+export const erasureApi = {
+  list: () => apiFetch<{ requests: ErasureRequest[]; total: number }>("/api/v1/erasure/requests"),
+  create: (body: { subjectId: string; reason: string; searchQuery: string }) =>
+    apiFetch<{ request: ErasureRequest }>("/api/v1/erasure/requests", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  certificateDownloadUrl: (requestId: string) =>
+    `${API_BASE}/api/v1/erasure/requests/${requestId}/certificate/download`,
+};

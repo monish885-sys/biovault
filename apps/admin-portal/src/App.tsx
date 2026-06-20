@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { ErasureQueue } from "./components/ErasureQueue";
 import { JobQueue } from "./components/JobQueue";
 import { LoginForm } from "./components/LoginForm";
 import { TapeInventory } from "./components/TapeInventory";
 import { authApi, type AuthUser } from "./lib/api";
 
-type Tab = "jobs" | "tapes";
+type Tab = "jobs" | "tapes" | "erasure";
 
 export function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -88,6 +89,7 @@ export function App() {
           [
             ["jobs", "Retrieval queue"],
             ["tapes", "Tape inventory"],
+            ["erasure", "Erasure queue"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -105,7 +107,7 @@ export function App() {
         ))}
       </nav>
 
-      {tab === "jobs" ? <JobQueue /> : <TapeInventory />}
+      {tab === "jobs" ? <JobQueue /> : tab === "tapes" ? <TapeInventory /> : <ErasureQueue />}
     </div>
   );
 }

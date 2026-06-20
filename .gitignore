@@ -10,5 +10,6 @@ coverage/
 playwright-report/
 test-results/
 staging/
+.local-data/
 *.tsbuildinfo
 .pnpm-store/

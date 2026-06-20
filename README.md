@@ -31,9 +31,20 @@ pnpm --filter @biovault/sentinel-api db:seed
 # API (terminal 1)
 pnpm dev:api
 
-# Portals (Day 12–13)
-pnpm dev:client   # http://localhost:5173 — search, request, tracker
-pnpm dev:admin    # http://localhost:5174 — job queue, SLA, complete retrieval
+# Portals (Day 12–16)
+pnpm dev:client   # http://localhost:5173 — search, request, tracker, billing, compliance
+pnpm dev:admin    # http://localhost:5174 — job queue, SLA, tape inventory, erasure queue
+```
+
+**MVP demo (Day 14):**
+
+```bash
+pnpm compose:up   # or local mongo + redis
+export SESSION_SECRET=dev-secret SEARCH_TOKEN_SECRET=dev-search STAGING_PATH=./staging
+pnpm --filter @biovault/sentinel-api db:migrate && pnpm --filter @biovault/sentinel-api db:seed
+pnpm dev:api      # terminal 1
+pnpm demo         # full ingest → retrieval → audit curl loop
+pnpm test:e2e     # Playwright portal E2E (optional)
 ```
 
 Health check:

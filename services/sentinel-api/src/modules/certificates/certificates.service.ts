@@ -5,7 +5,7 @@ import { CertificateModel } from "../../db/schemas/certificate.js";
 import { ClientModel } from "../../db/schemas/client.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
 import { getIngestReportForClient, type IngestReport } from "../ingest/ingest.service.js";
-import { buildIngestCertificatePdf } from "./pdf.js";
+import { buildIngestCertificatePdf, buildDeletionCertificatePdf } from "./pdf.js";
 import { signBuffer } from "./signing.js";
 import { readCertificatePdf, writeCertificatePdf } from "./storage.js";
 
@@ -176,4 +176,119 @@ export async function autoIssueIngestCertificate(
   } catch {
     // Certificate issuance must not block ingest sealing.
   }
+}
+
+export type DeletionCertInput = {
+  clientId: string;
+  erasureRequestId: string;
+  subjectId: string;
+  fileIds: string[];
+  technicianId: string;
+  technicianEmail: string;
+  degaussMethod: string;
+  userId?: string;
+  ip?: string;
+};
+
+export async function issueDeletionCertificate(
+  input: DeletionCertInput,
+): Promise<CertificateSummary> {
+  const { FileModel } = await import("../../db/schemas/file.js");
+  const client = await ClientModel.findById(input.clientId).select("name").lean();
+  if (!client) throw new NotFoundError("Client not found");
+
+  const files = await FileModel.find({ _id: { $in: input.fileIds } })
+    .select("filename")
+    .lean();
+  const filenames = files.map((f) => f.filename);
+  const completedAt = new Date().toISOString();
+
+  const contentHash = createHash("sha256")
+    .update(
+      JSON.stringify({
+        clientName: client.name,
+        subjectId: input.subjectId,
+        erasureRequestId: input.erasureRequestId,
+        filenames,
+        degaussMethod: input.degaussMethod,
+        completedAt,
+      }),
+    )
+    .digest("hex");
+
+  const { algorithm, signature } = await signBuffer(Buffer.from(contentHash, "hex"));
+
+  const draftPdf = await buildDeletionCertificatePdf({
+    clientName: client.name,
+    subjectId: input.subjectId,
+    erasureRequestId: input.erasureRequestId,
+    completedAt,
+    filenames,
+    degaussMethod: input.degaussMethod,
+    technicianEmail: input.technicianEmail,
+    pdfSha256: contentHash,
+    algorithm,
+    signature,
+  });
+
+  const pdfSha256 = createHash("sha256").update(draftPdf).digest("hex");
+  const cert = await CertificateModel.create({
+    type: "deletion_confirmation",
+    clientId: new Types.ObjectId(input.clientId),
+    pdfStorageRef: input.erasureRequestId,
+    pdfSha256,
+    metadata: {
+      erasureRequestId: input.erasureRequestId,
+      subjectId: input.subjectId,
+      algorithm,
+      signature,
+      contentHash,
+      fileCount: filenames.length,
+      degaussMethod: input.degaussMethod,
+    },
+  });
+
+  await writeCertificatePdf(String(cert._id), draftPdf);
+
+  await recordAuditEvent({
+    action: "certificate.deletion_issued",
+    userId: input.userId ? new Types.ObjectId(input.userId) : undefined,
+    clientId: new Types.ObjectId(input.clientId),
+    ipAddress: input.ip,
+    payload: {
+      certificateId: String(cert._id),
+      erasureRequestId: input.erasureRequestId,
+      subjectId: input.subjectId,
+      pdfSha256,
+    },
+  });
+
+  return toSummary({
+    ...cert.toObject(),
+    metadata: {
+      ...cert.metadata,
+      ingestJobId: input.erasureRequestId,
+    },
+  });
+}
+
+export async function readDeletionCertificatePdf(
+  clientId: string,
+  certificateId: string,
+): Promise<{ buffer: Buffer; filename: string }> {
+  const cert = await CertificateModel.findOne({
+    _id: new Types.ObjectId(certificateId),
+    clientId: new Types.ObjectId(clientId),
+    type: "deletion_confirmation",
+  }).lean();
+
+  if (!cert) {
+    throw new NotFoundError("Deletion certificate not found");
+  }
+
+  const buffer = await readCertificatePdf(String(cert._id));
+  return {
+    buffer,
+    filename: `biovault-deletion-${cert.metadata?.erasureRequestId ?? certificateId}.pdf`,
+  };
 }

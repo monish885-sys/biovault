@@ -7,3 +7,4 @@ export * from "./ingest-job.js";
 export * from "./retrieval-job.js";
 export * from "./audit-event.js";
 export * from "./certificate.js";
+export * from "./erasure-request.js";

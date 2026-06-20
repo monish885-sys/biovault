@@ -107,3 +107,32 @@ export function absoluteDownloadUrl(path: string): string {
   if (path.startsWith("http")) return path;
   return `${API_BASE}${path}`;
 }
+
+export type ErasureRequest = {
+  id: string;
+  subjectId: string;
+  reason: string;
+  searchQuery: string;
+  status: string;
+  matchedFileCount: number;
+  affectedTapeBarcodes?: string[];
+  createdAt: string;
+};
+
+export type AdminErasureRequest = ErasureRequest & {
+  clientName?: string;
+  filenames?: string[];
+  tapeLocations?: Array<{ barcode: string; rack?: string; slot?: string }>;
+};
+
+export const erasureApi = {
+  list: () =>
+    apiFetch<{ requests: ErasureRequest[]; total: number }>("/api/v1/admin/erasure/requests"),
+  get: (id: string) =>
+    apiFetch<{ request: AdminErasureRequest }>(`/api/v1/admin/erasure/requests/${id}`),
+  complete: (id: string, body: { degaussMethod: string; notes?: string }) =>
+    apiFetch<{ request: ErasureRequest }>(`/api/v1/admin/erasure/requests/${id}/complete`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+};
