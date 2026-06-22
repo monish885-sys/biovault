@@ -38,4 +38,6 @@ export const config = {
     .split(",")
     .map((s) => s.trim()),
   certSigningKeyPath: process.env.CERT_SIGNING_KEY_PATH,
+  demoMode: process.env.DEMO_MODE === "true" || process.env.DEMO_MODE === "1",
+  publicUrl: process.env.PUBLIC_URL ?? "",
 };

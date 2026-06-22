@@ -13,6 +13,23 @@ Product context: [`docs/KT-phase1.md`](docs/KT-phase1.md)
 | Portals | React 19, Vite, Tailwind 4 |
 | Tape (dev) | `TapeSimulator` — swap via `TAPE_ADAPTER` |
 
+## Public demo
+
+**Live sandbox** (marketing + client + admin on one host):
+
+| Path | What |
+|------|------|
+| `/` | Company landing page |
+| `/client/` | Client portal — `admin@acme.test` / `ChangeMe123!` |
+| `/admin/` | Admin portal — `tech@biovault.test` / `ChangeMe123!` |
+
+Deploy: see [`deploy/DEPLOY.md`](deploy/DEPLOY.md) — Fly.io, Render, Docker, or local + Cloudflare tunnel.
+
+```bash
+pnpm docker:demo    # build production image
+bash deploy/local-demo.sh   # local all-in-one without Docker
+```
+
 ## Quick start
 
 ```bash

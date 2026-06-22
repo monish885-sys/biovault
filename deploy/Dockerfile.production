@@ -1,0 +1,74 @@
+# BioVault Sentinel — all-in-one demo production image
+# Marketing + client + admin portals, API, MongoDB, Redis, nginx
+
+FROM node:22-bookworm AS deps
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY packages/common/package.json packages/common/
+COPY packages/contracts/package.json packages/contracts/
+COPY services/sentinel-api/package.json services/sentinel-api/
+COPY apps/client-portal/package.json apps/client-portal/
+COPY apps/admin-portal/package.json apps/admin-portal/
+COPY apps/marketing/package.json apps/marketing/
+RUN pnpm install --frozen-lockfile || pnpm install
+
+FROM node:22-bookworm AS build
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+RUN pnpm --filter @biovault/common build \
+  && pnpm --filter @biovault/contracts build \
+  && pnpm --filter @biovault/sentinel-api build
+
+ENV VITE_DEMO_MODE=true
+ENV VITE_API_URL=
+RUN VITE_BASE_PATH=/client/ pnpm --filter @biovault/client-portal build \
+  && VITE_BASE_PATH=/admin/ pnpm --filter @biovault/admin-portal build \
+  && VITE_BASE_PATH=/ pnpm --filter @biovault/marketing build
+
+FROM node:22-bookworm AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    redis-server \
+    curl \
+    gettext-base \
+    gnupg \
+    ca-certificates \
+  && curl -fsSL https://pgp.mongodb.com/server-7.0.asc \
+    | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor \
+  && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
+    > /etc/apt/sources.list.d/mongodb-org-7.0.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends mongodb-org mongodb-mongosh \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -f /etc/nginx/sites-enabled/default
+
+WORKDIR /app/api
+COPY --from=build /app/services/sentinel-api/dist ./dist
+COPY --from=build /app/services/sentinel-api/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/common/dist /app/packages/common/dist
+COPY --from=build /app/packages/common/package.json /app/packages/common/package.json
+
+COPY --from=build /app/apps/marketing/dist /var/www/marketing
+COPY --from=build /app/apps/client-portal/dist /var/www/client
+COPY --from=build /app/apps/admin-portal/dist /var/www/admin
+
+COPY deploy/nginx/default.conf.template /etc/nginx/templates/default.conf.template
+COPY deploy/start.sh /start.sh
+RUN chmod +x /start.sh && mkdir -p /data/db /staging
+
+ENV PORT=8080
+ENV NODE_ENV=production
+ENV DEMO_MODE=true
+ENV USE_EMBEDDED_DATASTORES=true
+ENV SEED_ON_START=true
+ENV TAPE_ADAPTER=sim
+ENV STAGING_PATH=/staging
+ENV APP_VERSION=0.1.0-demo
+
+EXPOSE 8080
+CMD ["/start.sh"]

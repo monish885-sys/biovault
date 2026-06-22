@@ -1,0 +1,40 @@
+# fly.io — BioVault Sentinel demo
+# Deploy from repo root: fly deploy
+
+app = 'biovault-demo'
+primary_region = 'bom'
+
+[build]
+  dockerfile = 'deploy/Dockerfile.production'
+
+[env]
+  DEMO_MODE = 'true'
+  NODE_ENV = 'production'
+  USE_EMBEDDED_DATASTORES = 'true'
+  SEED_ON_START = 'true'
+  TAPE_ADAPTER = 'sim'
+  LOG_LEVEL = 'info'
+  APP_VERSION = '0.1.0-demo'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = '90s'
+    interval = '30s'
+    method = 'GET'
+    path = '/health'
+    timeout = '15s'
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[mounts]
+  source = 'biovault_data'
+  destination = '/data/db'

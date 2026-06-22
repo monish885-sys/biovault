@@ -17,7 +17,9 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "compose:up": "docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example up -d",
-    "compose:down": "docker compose -f deploy/docker-compose.yml down"
+    "compose:down": "docker compose -f deploy/docker-compose.yml down",
+    "docker:demo": "docker build -f deploy/Dockerfile.production -t biovault-demo .",
+    "docker:demo:run": "docker run --rm -p 8080:8080 -e SESSION_SECRET=dev-demo-secret -e SEARCH_TOKEN_SECRET=dev-search-secret -e DOWNLOAD_TOKEN_SECRET=dev-download-secret biovault-demo"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.1",

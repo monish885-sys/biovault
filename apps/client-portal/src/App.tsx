@@ -3,11 +3,14 @@ import { BillingPanel } from "./components/BillingPanel";
 import { CompliancePanel } from "./components/CompliancePanel";
 import { DashboardPanel } from "./components/DashboardPanel";
 import { LoginForm } from "./components/LoginForm";
+import { DemoBanner } from "./components/DemoBanner";
 import { RetrievalTracker } from "./components/RetrievalTracker";
 import { SearchPanel } from "./components/SearchPanel";
 import { authApi, clientApi, type AuthUser, type ClientProfile } from "./lib/api";
 
 type Tab = "overview" | "search" | "jobs" | "billing" | "compliance";
+
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
 
 const TAB_META: Record<Tab, { label: string; icon: string; hint: string }> = {
   overview: { label: "Overview", icon: "🏠", hint: "Vault & storage at a glance" },
@@ -96,7 +99,9 @@ export function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-mesh p-8">
+      <div className="min-h-screen bg-mesh">
+        {DEMO_MODE && <DemoBanner portal="client" />}
+        <div className="p-8">
         <header className="mb-10 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl ring-1 ring-emerald-500/30">
             🏥
@@ -108,6 +113,7 @@ export function App() {
           </p>
         </header>
         <LoginForm onLogin={handleLogin} error={loginError ?? undefined} />
+        </div>
       </div>
     );
   }
@@ -128,6 +134,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-mesh">
+      {DEMO_MODE && <DemoBanner portal="client" />}
       <div className="mx-auto max-w-6xl p-6 md:p-8">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-700/60 pb-5">
           <div className="flex items-center gap-4">

@@ -1,0 +1,34 @@
+# Render.com blueprint — BioVault Sentinel demo
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: biovault
+    runtime: docker
+    dockerfilePath: ./deploy/Dockerfile.production
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: USE_EMBEDDED_DATASTORES
+        value: "true"
+      - key: SEED_ON_START
+        value: "true"
+      - key: TAPE_ADAPTER
+        value: sim
+      - key: PORT
+        value: "8080"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SEARCH_TOKEN_SECRET
+        generateValue: true
+      - key: DOWNLOAD_TOKEN_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://biovault.onrender.com
+      - key: PUBLIC_URL
+        value: https://biovault.onrender.com

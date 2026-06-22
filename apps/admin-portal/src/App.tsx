@@ -2,10 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { ErasureQueue } from "./components/ErasureQueue";
 import { JobQueue } from "./components/JobQueue";
 import { LoginForm } from "./components/LoginForm";
+import { DemoBanner } from "./components/DemoBanner";
 import { TapeInventory } from "./components/TapeInventory";
 import { authApi, type AuthUser } from "./lib/api";
 
 type Tab = "jobs" | "tapes" | "erasure";
+
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
 
 export function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -59,19 +62,24 @@ export function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="min-h-screen">
+        {DEMO_MODE && <DemoBanner portal="admin" />}
+        <div className="p-8">
         <header className="mb-10 text-center">
           <p className="text-sm uppercase tracking-widest text-amber-400">Operations</p>
           <h1 className="mt-2 text-3xl font-semibold">Sentinel Admin Portal</h1>
           <p className="mt-2 text-zinc-400">Sign in to manage retrieval jobs and tape inventory.</p>
         </header>
         <LoginForm onLogin={handleLogin} error={loginError ?? undefined} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8">
+    <div className="min-h-screen">
+      {DEMO_MODE && <DemoBanner portal="admin" />}
+      <div className="p-6 md:p-8">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-700 pb-4">
         <div>
           <p className="text-sm uppercase tracking-widest text-amber-400">Operations</p>
@@ -113,6 +121,7 @@ export function App() {
       </nav>
 
       {tab === "jobs" ? <JobQueue /> : tab === "tapes" ? <TapeInventory /> : <ErasureQueue />}
+      </div>
     </div>
   );
 }

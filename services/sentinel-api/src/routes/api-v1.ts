@@ -14,8 +14,10 @@ import { searchRouter } from "../modules/search/search.routes.js";
 import { billingRouter } from "../modules/billing/billing.routes.js";
 import { erasureRouter } from "../modules/erasure/erasure.routes.js";
 import { adminErasureRouter } from "../modules/erasure/admin-erasure.routes.js";
+import { demoRouter } from "../routes/demo.js";
 export const apiV1Router = Router();
 
+apiV1Router.use("/demo", demoRouter);
 apiV1Router.use("/auth", authRouter);
 apiV1Router.use("/clients", clientsRouter);
 
