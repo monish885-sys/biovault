@@ -1,5 +1,11 @@
 import "./index.css";
 
+const DEMO_BASE = (import.meta.env.VITE_DEMO_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+
+function demoPath(path: string): string {
+  return DEMO_BASE ? `${DEMO_BASE}${path}` : path;
+}
+
 const FEATURES = [
   {
     icon: "🔒",
@@ -52,9 +58,9 @@ function mount() {
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <a href="/client/" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Client portal</a>
-          <a href="/admin/" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Admin</a>
-          <a href="/client/" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500">Launch demo</a>
+          <a href="${demoPath("/client/")}" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Client portal</a>
+          <a href="${demoPath("/admin/")}" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Admin</a>
+          <a href="${demoPath("/client/")}" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500">Launch demo</a>
         </div>
       </nav>
 
@@ -71,10 +77,10 @@ function mount() {
           magnetic tape — secure, searchable, and DPDPA-aligned — with a modern web dashboard.
         </p>
         <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <a href="/client/" class="w-full rounded-xl bg-emerald-600 px-8 py-4 text-center text-lg font-semibold text-white shadow-lg shadow-emerald-900/40 hover:bg-emerald-500 sm:w-auto">
+          <a href="${demoPath("/client/")}" class="w-full rounded-xl bg-emerald-600 px-8 py-4 text-center text-lg font-semibold text-white shadow-lg shadow-emerald-900/40 hover:bg-emerald-500 sm:w-auto">
             Try interactive demo →
           </a>
-          <a href="/admin/" class="w-full rounded-xl border border-slate-600 px-8 py-4 text-center text-lg font-medium text-slate-200 hover:border-slate-500 sm:w-auto">
+          <a href="${demoPath("/admin/")}" class="w-full rounded-xl border border-slate-600 px-8 py-4 text-center text-lg font-medium text-slate-200 hover:border-slate-500 sm:w-auto">
             Admin operations view
           </a>
         </div>
@@ -120,7 +126,7 @@ function mount() {
                 <div class="flex gap-2"><dt class="text-slate-500">Email</dt><dd class="font-mono text-emerald-400">admin@acme.test</dd></div>
                 <div class="flex gap-2"><dt class="text-slate-500">Password</dt><dd class="font-mono text-slate-300">ChangeMe123!</dd></div>
               </dl>
-              <a href="/client/" class="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500">Open client demo</a>
+              <a href="${demoPath("/client/")}" class="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500">Open client demo</a>
             </div>
             <div class="p-8">
               <h2 class="text-xl font-bold text-white">Admin portal</h2>
@@ -129,7 +135,7 @@ function mount() {
                 <div class="flex gap-2"><dt class="text-slate-500">Email</dt><dd class="font-mono text-amber-400">tech@biovault.test</dd></div>
                 <div class="flex gap-2"><dt class="text-slate-500">Password</dt><dd class="font-mono text-slate-300">ChangeMe123!</dd></div>
               </dl>
-              <a href="/admin/" class="mt-6 inline-block rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-500">Open admin demo</a>
+              <a href="${demoPath("/admin/")}" class="mt-6 inline-block rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-500">Open admin demo</a>
             </div>
           </div>
         </div>
@@ -141,7 +147,7 @@ function mount() {
           Hyderabad colocation · LTO-9 magnetic tape · metadata-only online tier · immutable audit log ·
           signed PDF certificates for ingest and deletion.
         </p>
-        <a href="/client/" class="mt-8 inline-block rounded-xl bg-emerald-600 px-10 py-4 text-lg font-semibold text-white hover:bg-emerald-500">
+        <a href="${demoPath("/client/")}" class="mt-8 inline-block rounded-xl bg-emerald-600 px-10 py-4 text-lg font-semibold text-white hover:bg-emerald-500">
           Start exploring →
         </a>
       </section>

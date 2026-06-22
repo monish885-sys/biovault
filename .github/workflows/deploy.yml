@@ -45,7 +45,7 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile || pnpm install
-      - run: pnpm --filter @biovault/marketing build
+      - run: VITE_BASE_PATH=/biovault/ VITE_DEMO_URL=${{ vars.DEMO_APP_URL }} pnpm --filter @biovault/marketing build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
