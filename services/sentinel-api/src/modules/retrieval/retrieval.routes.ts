@@ -1,6 +1,8 @@
 import { pipeline } from "node:stream/promises";
 import type { Request, Response, NextFunction } from "express";
 import { Router } from "express";
+import { requireRoles } from "../../middleware/auth.js";
+import { ROUTE_ROLES } from "../auth/permissions.js";
 import {
   fulfillRetrievalDownload,
   purgeRetrievalAfterDownload,
@@ -23,7 +25,17 @@ export async function retrievalDownloadHandler(
       return;
     }
 
-    const result = await fulfillRetrievalDownload(token.trim(), req.ip);
+    if (!req.auth?.clientId) {
+      res.status(403).json({ error: "FORBIDDEN", message: "Client account required" });
+      return;
+    }
+
+    const result = await fulfillRetrievalDownload(
+      token.trim(),
+      req.auth.clientId,
+      req.auth.sub,
+      req.ip,
+    );
     res.setHeader("Content-Type", result.contentType);
     res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
 
@@ -46,7 +58,7 @@ export async function retrievalDownloadHandler(
 
 export const retrievalRouter = Router();
 
-retrievalRouter.post("/jobs", async (req, res, next) => {
+retrievalRouter.post("/jobs", requireRoles(...ROUTE_ROLES.retrievalCreate), async (req, res, next) => {
   try {
     const fileId = req.body?.fileId;
     if (typeof fileId !== "string" || !fileId.trim()) {

@@ -3,10 +3,10 @@ import { mkdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import type { Readable } from "node:stream";
-import { config } from "../../config.js";
+import { getStagingPath } from "../../config.js";
 
 function stagingRoot(): string {
-  return process.env.STAGING_PATH ?? config.stagingPath;
+  return getStagingPath();
 }
 
 export function retrievalJobDir(retrievalJobId: string): string {

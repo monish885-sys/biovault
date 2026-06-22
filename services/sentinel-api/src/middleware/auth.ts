@@ -2,7 +2,7 @@ import type { RequestHandler } from "express";
 import { ForbiddenError, UnauthorizedError } from "@biovault/common";
 import type { UserRole } from "../db/schemas/user.js";
 import { isClientRole, isInternalRole } from "../modules/auth/permissions.js";
-import { SESSION_COOKIE, verifySession, type SessionPayload } from "../modules/auth/session.js";
+import { readSessionTokenFromRequest, verifySession, type SessionPayload } from "../modules/auth/session.js";
 
 export type AuthUser = SessionPayload;
 
@@ -15,8 +15,7 @@ declare global {
 }
 
 function readSessionToken(req: Parameters<RequestHandler>[0]): string | undefined {
-  const raw = req.cookies?.[SESSION_COOKIE];
-  return typeof raw === "string" ? raw : undefined;
+  return readSessionTokenFromRequest(req.cookies, req.get("X-Sentinel-Portal") ?? undefined);
 }
 
 export const requireAuth: RequestHandler = (req, _res, next) => {

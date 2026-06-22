@@ -60,13 +60,14 @@ On assign/start, admin UI shows **tape barcode, rack, slot** from `file_location
 2. Writes transient copy to `STAGING_PATH/retrieval/`
 3. Issues HMAC-signed download token (default TTL 1 hour)
 4. Sets job status `ready`
+5. Records `retrieval.client_notified` (portal notification stub)
 
-Response includes `downloadUrl` for technician verification.
+Admin response includes `stagedForClient: true` only — **no download URL**. Ops staff must not receive file bytes on their workstation.
 
 ## Step 5 — Client download
 
-**Portal:** Client Portal → Retrieval jobs → Download when status `ready`  
-**API:** `GET /api/v1/retrieval/download?token=...` (no cookie required)
+**Portal:** Client Portal → Retrieval jobs → **Download file** (authenticated fetch with client session)  
+**API:** `GET /api/v1/retrieval/download?token=...` — **requires client login** and matching tenant
 
 After successful download or TTL expiry, staging file is purged and job moves to `delivered` or `expired`.
 

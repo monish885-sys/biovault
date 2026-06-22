@@ -203,7 +203,7 @@ describe("auth + RBAC integration", () => {
       .send({ email: "admin@acme.test", password: PASSWORD });
     expect(res.status).toBe(200);
     expect(res.body.user.role).toBe("client_admin");
-    expect(res.headers["set-cookie"]?.join(";")).toContain("sentinel_session");
+    expect(res.headers["set-cookie"]?.join(";")).toContain("sentinel_session_client");
   });
 
   it("allows client_admin through RBAC to search archived files", async () => {

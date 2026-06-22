@@ -11,12 +11,15 @@ async function parseJson<T>(res: Response): Promise<T> {
   return data as T;
 }
 
+const PORTAL_HEADER = "X-Sentinel-Portal";
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      [PORTAL_HEADER]: "client",
       ...init?.headers,
     },
   });
@@ -83,6 +86,24 @@ export const retrievalApi = {
       method: "POST",
       body: JSON.stringify({ fileId }),
     }),
+  download: async (downloadUrl: string, filename: string): Promise<void> => {
+    const path = downloadUrl.startsWith("http") ? downloadUrl : `${API_BASE}${downloadUrl}`;
+    const res = await fetch(path, {
+      credentials: "include",
+      headers: { "X-Sentinel-Portal": "client" },
+    });
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as ApiError;
+      throw new Error(err.message ?? `Download failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 export function absoluteDownloadUrl(path: string): string {
@@ -105,6 +126,13 @@ export type BillingSummary = {
   byCategory: Array<{ category: string; bytes: number; tb: number }>;
 };
 
+export type InvoicePreview = {
+  period: string;
+  lineItems: Array<{ label: string; quantity: number; unitInr: number; totalInr: number }>;
+  subtotalInr: number;
+  estimatedTotalInr: number;
+};
+
 export type ErasureRequest = {
   id: string;
   subjectId: string;
@@ -116,9 +144,48 @@ export type ErasureRequest = {
   certificateId?: string;
 };
 
+export type AuditExport = {
+  events: Array<{ action: string; timestamp: string }>;
+  chainValid: boolean;
+};
+
+export type ClientVaultSummary = {
+  storageTb: number;
+  storageIncludedTb: number;
+  storageRemainingTb: number;
+  byCategory: Array<{ category: string; tb: number }>;
+};
+
+export type ClientProfile = {
+  id: string;
+  name: string;
+  slug: string;
+  tier: string;
+  retentionPolicyYears: number;
+  dataCategories: string[];
+  onboardingComplete: boolean;
+  vault: ClientVaultSummary;
+};
+
+export const clientApi = {
+  me: () => apiFetch<{ client: ClientProfile }>("/api/v1/clients/me"),
+};
+
 export const billingApi = {
   summary: () => apiFetch<{ summary: BillingSummary }>("/api/v1/billing/summary"),
-  invoice: () => apiFetch<{ invoice: unknown }>("/api/v1/billing/invoice"),
+  invoice: () => apiFetch<{ invoice: InvoicePreview }>("/api/v1/billing/invoice"),
+};
+
+export const auditApi = {
+  exportUrl: () => `${API_BASE}/api/v1/audit/export`,
+  export: async () => {
+    const res = await fetch(`${API_BASE}/api/v1/audit/export`, {
+      credentials: "include",
+      headers: { "X-Sentinel-Portal": "client" },
+    });
+    if (!res.ok) throw new Error("Audit export failed");
+    return res.json() as Promise<AuditExport>;
+  },
 };
 
 export const erasureApi = {

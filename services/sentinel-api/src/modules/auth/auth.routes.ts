@@ -27,7 +27,7 @@ authRouter.post(
 
 authRouter.post("/logout", requireAuth, async (req, res, next) => {
   try {
-    await logout(req.auth?.sub, req.auth?.clientId, res, req.ip);
+    await logout(req.auth?.sub, req.auth?.clientId, req.auth?.role, res, req.ip);
     res.status(204).send();
   } catch (err) {
     next(err);

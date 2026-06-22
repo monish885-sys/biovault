@@ -2,6 +2,15 @@ import { Types } from "mongoose";
 import { NotFoundError, ValidationError } from "@biovault/common";
 import { ClientModel } from "../../db/schemas/client.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
+import { getStorageMetrics } from "../billing/billing.service.js";
+import { TIER_LIMITS, type TierKey } from "../billing/tiers.js";
+
+export type ClientVaultSummary = {
+  storageTb: number;
+  storageIncludedTb: number;
+  storageRemainingTb: number;
+  byCategory: Array<{ category: string; tb: number }>;
+};
 
 export type ClientProfile = {
   id: string;
@@ -11,6 +20,7 @@ export type ClientProfile = {
   retentionPolicyYears: number;
   dataCategories: string[];
   onboardingComplete: boolean;
+  vault: ClientVaultSummary;
 };
 
 function toProfile(doc: {
@@ -21,7 +31,7 @@ function toProfile(doc: {
   retentionPolicyYears: number;
   dataCategories?: string[];
   onboardingComplete?: boolean;
-}): ClientProfile {
+}): Omit<ClientProfile, "vault"> {
   return {
     id: String(doc._id),
     name: doc.name,
@@ -33,6 +43,19 @@ function toProfile(doc: {
   };
 }
 
+async function buildVaultSummary(clientId: string, tier: string): Promise<ClientVaultSummary> {
+  const limits = TIER_LIMITS[(tier as TierKey) ?? "base"] ?? TIER_LIMITS.base;
+  const { storageTb, byCategory } = await getStorageMetrics(clientId);
+  const storageIncludedTb = limits.storageTb;
+  const storageRemainingTb = Math.max(0, Math.round((storageIncludedTb - storageTb) * 1000) / 1000);
+  return {
+    storageTb,
+    storageIncludedTb,
+    storageRemainingTb,
+    byCategory: byCategory.map(({ category, tb }) => ({ category, tb })),
+  };
+}
+
 export async function getClientProfile(clientId: string): Promise<ClientProfile> {
   if (!Types.ObjectId.isValid(clientId)) {
     throw new NotFoundError("Client not found");
@@ -41,7 +64,8 @@ export async function getClientProfile(clientId: string): Promise<ClientProfile>
   if (!client?.active) {
     throw new NotFoundError("Client not found");
   }
-  return toProfile(client);
+  const vault = await buildVaultSummary(clientId, client.tier);
+  return { ...toProfile(client), vault };
 }
 
 export async function updateOnboardingStub(
@@ -89,5 +113,5 @@ export async function updateOnboardingStub(
     payload: updates,
   });
 
-  return toProfile(client);
+  return getClientProfile(clientId);
 }

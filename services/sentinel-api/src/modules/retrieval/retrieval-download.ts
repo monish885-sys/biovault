@@ -2,7 +2,7 @@ import { createReadStream } from "node:fs";
 import { access } from "node:fs/promises";
 import { basename } from "node:path";
 import { Types } from "mongoose";
-import { NotFoundError, ValidationError } from "@biovault/common";
+import { ForbiddenError, NotFoundError, ValidationError } from "@biovault/common";
 import { RetrievalJobModel } from "../../db/schemas/retrieval-job.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
 import { verifyDownloadToken } from "./download-token.js";
@@ -18,6 +18,8 @@ export type DownloadFulfillment = {
 
 export async function fulfillRetrievalDownload(
   signedToken: string,
+  clientId: string,
+  userId: string,
   ipAddress?: string,
 ): Promise<DownloadFulfillment> {
   const payload = verifyDownloadToken(signedToken);
@@ -28,6 +30,10 @@ export async function fulfillRetrievalDownload(
   const job = await RetrievalJobModel.findById(payload.jobId);
   if (!job) {
     throw new NotFoundError("Retrieval job not found");
+  }
+
+  if (String(job.clientId) !== clientId) {
+    throw new ForbiddenError("This download is not available for your account");
   }
 
   if (job.status !== "ready") {
@@ -58,11 +64,13 @@ export async function fulfillRetrievalDownload(
 
   await recordAuditEvent({
     action: "retrieval.downloaded",
+    userId: new Types.ObjectId(userId),
     clientId: job.clientId as Types.ObjectId,
     ipAddress,
     payload: {
       retrievalJobId,
       fileId: String(job.fileId),
+      downloadedBy: userId,
     },
   });
 

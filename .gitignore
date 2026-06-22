@@ -11,5 +11,6 @@ playwright-report/
 test-results/
 staging/
 .local-data/
+.venv-ppt/
 *.tsbuildinfo
 .pnpm-store/

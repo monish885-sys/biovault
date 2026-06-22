@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   completeRetrievalJob,
+  toAdminCompleteResult,
   updateAdminRetrievalJobStatus,
 } from "../retrieval/retrieval-complete.js";
 import { listAdminJobs } from "./admin-jobs.service.js";
@@ -53,7 +54,7 @@ adminJobsRouter.post("/:jobId/complete", async (req, res, next) => {
       req.auth!.sub,
       req.ip,
     );
-    res.json({ job: result });
+    res.json({ job: toAdminCompleteResult(result) });
   } catch (err) {
     next(err);
   }

@@ -1,9 +1,21 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Response } from "express";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { config } from "../../config.js";
 import type { UserRole } from "../../db/schemas/user.js";
 
-export const SESSION_COOKIE = "sentinel_session";
+const CLIENT_ROLES: readonly UserRole[] = [
+  "client_admin",
+  "client_viewer",
+  "compliance_officer",
+];
+
+/** Legacy name — client portal cookie (kept for tests referencing the constant). */
+export const SESSION_COOKIE = "sentinel_session_client";
+
+export const SESSION_COOKIE_CLIENT = "sentinel_session_client";
+export const SESSION_COOKIE_OPS = "sentinel_session_ops";
+
+export type SessionPortal = "client" | "ops";
 
 export type SessionPayload = {
   sub: string;
@@ -11,6 +23,14 @@ export type SessionPayload = {
   clientId?: string;
   exp: number;
 };
+
+export function portalForRole(role: UserRole): SessionPortal {
+  return CLIENT_ROLES.includes(role) ? "client" : "ops";
+}
+
+export function cookieNameForPortal(portal: SessionPortal): string {
+  return portal === "client" ? SESSION_COOKIE_CLIENT : SESSION_COOKIE_OPS;
+}
 
 export function signSession(
   payload: Pick<SessionPayload, "sub" | "role" | "clientId">,
@@ -48,8 +68,8 @@ export function verifySession(token: string): SessionPayload | null {
   return payload;
 }
 
-export function setSessionCookie(res: Response, token: string): void {
-  res.cookie(SESSION_COOKIE, token, {
+export function setSessionCookie(res: Response, token: string, portal: SessionPortal): void {
+  res.cookie(cookieNameForPortal(portal), token, {
     httpOnly: true,
     secure: config.nodeEnv === "production",
     sameSite: "lax",
@@ -58,6 +78,29 @@ export function setSessionCookie(res: Response, token: string): void {
   });
 }
 
-export function clearSessionCookie(res: Response): void {
-  res.clearCookie(SESSION_COOKIE, { path: "/" });
+export function clearSessionCookie(res: Response, portal: SessionPortal): void {
+  res.clearCookie(cookieNameForPortal(portal), { path: "/" });
+}
+
+/** Read session token for the portal indicated by X-Sentinel-Portal, or first valid cookie. */
+export function readSessionTokenFromRequest(
+  cookies: Record<string, unknown> | undefined,
+  portalHint?: string,
+): string | undefined {
+  const clientRaw = cookies?.[SESSION_COOKIE_CLIENT];
+  const opsRaw = cookies?.[SESSION_COOKIE_OPS];
+
+  // Strict portal isolation — never cross-read cookies when hint is set
+  if (portalHint === "client") {
+    return typeof clientRaw === "string" ? clientRaw : undefined;
+  }
+  if (portalHint === "ops") {
+    return typeof opsRaw === "string" ? opsRaw : undefined;
+  }
+
+  if (typeof clientRaw === "string") return clientRaw;
+  if (typeof opsRaw === "string") return opsRaw;
+
+  const legacy = cookies?.["sentinel_session"];
+  return typeof legacy === "string" ? legacy : undefined;
 }

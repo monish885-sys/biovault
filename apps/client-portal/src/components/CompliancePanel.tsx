@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { erasureApi, type ErasureRequest } from "../lib/api";
+import { auditApi, erasureApi, type ErasureRequest } from "../lib/api";
 
-export function CompliancePanel() {
+type Props = {
+  canSubmit?: boolean;
+};
+
+export function CompliancePanel({ canSubmit = true }: Props) {
   const [requests, setRequests] = useState<ErasureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -9,6 +13,7 @@ export function CompliancePanel() {
   const [reason, setReason] = useState("DPDPA Right to Erasure request");
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -42,49 +47,87 @@ export function CompliancePanel() {
     }
   }
 
+  async function exportAudit() {
+    setExporting(true);
+    setError(null);
+    try {
+      const data = await auditApi.export();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "sentinel-audit-export.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 rounded-lg border border-slate-700 bg-slate-900/50 p-4 md:grid-cols-2"
-      >
-        <div>
-          <label className="mb-1 block text-xs text-slate-400">Subject ID</label>
-          <input
-            required
-            value={subjectId}
-            onChange={(e) => setSubjectId(e.target.value)}
-            placeholder="SUBJ-2024-0042"
-            className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-slate-400">File search query</label>
-          <input
-            required
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="patient filename or keyword"
-            className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-xs text-slate-400">Reason</label>
-          <input
-            required
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-          />
+      <div className="vault-card flex flex-wrap items-center justify-between gap-4 p-5">
+        <div className="flex items-start gap-3">
+          <span className="text-3xl">🛡️</span>
+          <div>
+            <p className="font-medium text-slate-200">Privacy & compliance</p>
+            <p className="text-sm text-slate-400">
+              Submit data erasure requests under DPDPA or export your audit trail for regulators.
+            </p>
+          </div>
         </div>
         <button
-          type="submit"
-          disabled={submitting}
-          className="md:col-span-2 rounded bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
+          type="button"
+          onClick={() => void exportAudit()}
+          disabled={exporting}
+          className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-50"
         >
-          {submitting ? "Submitting…" : "Submit erasure request"}
+          {exporting ? "Exporting…" : "Export audit trail"}
         </button>
-      </form>
+      </div>
+
+      {canSubmit && (
+        <form onSubmit={handleSubmit} className="vault-card grid gap-4 p-5 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">Patient / subject ID</label>
+            <input
+              required
+              value={subjectId}
+              onChange={(e) => setSubjectId(e.target.value)}
+              placeholder="SUBJ-2024-0042"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">File search query</label>
+            <input
+              required
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="patient filename or keyword"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-xs text-slate-500">Reason for erasure</label>
+            <input
+              required
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="md:col-span-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {submitting ? "Submitting…" : "Submit erasure request"}
+          </button>
+        </form>
+      )}
 
       {error && (
         <p className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
@@ -92,54 +135,33 @@ export function CompliancePanel() {
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-700">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-slate-700 bg-slate-900/80 text-slate-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Subject</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Files</th>
-              <th className="px-4 py-3 font-medium">Created</th>
-              <th className="px-4 py-3 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : requests.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  No erasure requests yet.
-                </td>
-              </tr>
-            ) : (
-              requests.map((req) => (
-                <tr key={req.id} className="border-b border-slate-800">
-                  <td className="px-4 py-3 font-medium">{req.subjectId}</td>
-                  <td className="px-4 py-3 text-slate-400">{req.status.replace(/_/g, " ")}</td>
-                  <td className="px-4 py-3 text-slate-400">{req.matchedFileCount}</td>
-                  <td className="px-4 py-3 text-slate-400">
-                    {new Date(req.createdAt).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {req.status === "completed" && req.certificateId && (
-                      <a
-                        href={erasureApi.certificateDownloadUrl(req.id)}
-                        className="text-xs text-emerald-400 hover:underline"
-                      >
-                        Download certificate
-                      </a>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {loading ? (
+          <p className="text-slate-400">Loading…</p>
+        ) : requests.length === 0 ? (
+          <div className="vault-card py-10 text-center text-slate-500">No erasure requests yet.</div>
+        ) : (
+          requests.map((req) => (
+            <article key={req.id} className="vault-card flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p className="font-medium text-slate-200">{req.subjectId}</p>
+                <p className="text-sm text-slate-500">
+                  {req.status.replace(/_/g, " ")} · {req.matchedFileCount} file
+                  {req.matchedFileCount === 1 ? "" : "s"} ·{" "}
+                  {new Date(req.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              {req.status === "completed" && req.certificateId && (
+                <a
+                  href={erasureApi.certificateDownloadUrl(req.id)}
+                  className="rounded-lg border border-emerald-600/40 px-3 py-1.5 text-sm text-emerald-400 hover:bg-emerald-600/10"
+                >
+                  Download certificate
+                </a>
+              )}
+            </article>
+          ))
+        )}
       </div>
     </div>
   );

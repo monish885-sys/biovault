@@ -1,11 +1,19 @@
 import { useState, type FormEvent } from "react";
 import { searchApi, retrievalApi, type FileSearchResult } from "../lib/api";
+import { friendlyCategory } from "../lib/labels";
+
+const QUICK_CATEGORIES = [
+  { value: "imaging", label: "Medical imaging", icon: "🩻" },
+  { value: "lab_reports", label: "Lab reports", icon: "🧪" },
+  { value: "clinical", label: "Clinical records", icon: "📋" },
+];
 
 type Props = {
+  canRequest?: boolean;
   onJobCreated: () => void;
 };
 
-export function SearchPanel({ onJobCreated }: Props) {
+export function SearchPanel({ canRequest = true, onJobCreated }: Props) {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [fileType, setFileType] = useState("");
@@ -18,15 +26,17 @@ export function SearchPanel({ onJobCreated }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function runSearch(e?: FormEvent) {
+  async function runSearch(e?: FormEvent, categoryOverride?: string) {
     e?.preventDefault();
     setLoading(true);
     setError(null);
     setMessage(null);
+    const activeCategory = categoryOverride ?? category;
+    if (categoryOverride !== undefined) setCategory(categoryOverride);
     try {
       const params: Record<string, string> = { limit: "50" };
       if (q.trim()) params.q = q.trim();
-      if (category.trim()) params.category = category.trim();
+      if (activeCategory.trim()) params.category = activeCategory.trim();
       if (fileType.trim()) params.fileType = fileType.trim();
       if (from) params.from = from;
       if (to) params.to = to;
@@ -46,7 +56,7 @@ export function SearchPanel({ onJobCreated }: Props) {
     setMessage(null);
     try {
       await retrievalApi.create(fileId);
-      setMessage("Retrieval requested — track progress in the Jobs tab.");
+      setMessage("Request sent! Track progress under Retrieval jobs — your file will be ready within 15 minutes.");
       onJobCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
@@ -57,44 +67,92 @@ export function SearchPanel({ onJobCreated }: Props) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={runSearch} className="grid gap-4 rounded-lg border border-slate-700 bg-slate-900/50 p-4 md:grid-cols-3">
-        <input
-          placeholder="Filename or keyword"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-        />
-        <input
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-        />
-        <input
-          placeholder="File type (e.g. dcm)"
-          value={fileType}
-          onChange={(e) => setFileType(e.target.value)}
-          className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-        />
-        <input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-        />
-        <input
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
-        >
-          {loading ? "Searching…" : "Search archive"}
-        </button>
+      <div className="vault-card p-5">
+        <h2 className="text-lg font-semibold text-slate-100">Find archived records</h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Search your hospital&apos;s offline archive by patient name, scan type, or date. When you
+          find what you need, click <strong className="text-emerald-400">Request file</strong> and
+          we&apos;ll retrieve it from tape for you.
+        </p>
+      </div>
+
+      {/* Quick category chips */}
+      <div className="flex flex-wrap gap-2">
+        {QUICK_CATEGORIES.map((cat) => (
+          <button
+            key={cat.value}
+            type="button"
+            onClick={() => void runSearch(undefined, cat.value)}
+            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+              category === cat.value
+                ? "border-emerald-500 bg-emerald-600/20 text-emerald-300"
+                : "border-slate-700 bg-slate-900/50 text-slate-400 hover:border-slate-600"
+            }`}
+          >
+            <span>{cat.icon}</span>
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      <form
+        onSubmit={runSearch}
+        className="vault-card grid gap-4 p-4 md:grid-cols-3"
+      >
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Patient name or keyword</label>
+          <input
+            placeholder="Filename or keyword"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Record category</label>
+          <input
+            placeholder="imaging, lab_reports, clinical"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">File type</label>
+          <input
+            placeholder="e.g. dcm for DICOM scans"
+            value={fileType}
+            onChange={(e) => setFileType(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">From date</label>
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">To date</label>
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+          />
+        </div>
+        <div className="flex items-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {loading ? "Searching…" : "Search archive"}
+          </button>
+        </div>
       </form>
 
       {error && (
@@ -109,51 +167,50 @@ export function SearchPanel({ onJobCreated }: Props) {
       )}
 
       <p className="text-sm text-slate-400">
-        {total} file{total === 1 ? "" : "s"} found — tape locations are never shown.
+        {total} record{total === 1 ? "" : "s"} found — your files are stored securely on offline tapes.
       </p>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-700">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-slate-700 bg-slate-900/80 text-slate-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Filename</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Ingested</th>
-              <th className="px-4 py-3 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {files.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  {loading ? "Loading…" : "No results — run a search to find archived files."}
-                </td>
-              </tr>
-            ) : (
-              files.map((file) => (
-                <tr key={file.id} className="border-b border-slate-800 hover:bg-slate-900/40">
-                  <td className="px-4 py-3 font-medium">{file.filename}</td>
-                  <td className="px-4 py-3 text-slate-400">{file.fileType}</td>
-                  <td className="px-4 py-3 text-slate-400">{file.category}</td>
-                  <td className="px-4 py-3 text-slate-400">
-                    {new Date(file.ingestedAt).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => requestFile(file.id)}
-                      disabled={requesting === file.id}
-                      className="rounded border border-emerald-600/50 px-3 py-1 text-xs text-emerald-300 hover:bg-emerald-600/20 disabled:opacity-50"
-                    >
-                      {requesting === file.id ? "Requesting…" : "Request file"}
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {files.length === 0 ? (
+          <div className="vault-card py-12 text-center">
+            <span className="text-4xl">📂</span>
+            <p className="mt-3 text-slate-500">
+              {loading ? "Searching…" : "No results yet — try a search above or pick a category."}
+            </p>
+          </div>
+        ) : (
+          files.map((file) => (
+            <article
+              key={file.id}
+              className="vault-card flex flex-wrap items-center justify-between gap-3 p-4 transition hover:border-slate-600"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-lg">
+                  {file.fileType === "dcm" ? "🩻" : file.fileType === "pdf" ? "📄" : "📁"}
+                </span>
+                <div>
+                  <h3 className="font-medium text-slate-100">{file.filename}</h3>
+                  <p className="text-sm text-slate-500">
+                    {friendlyCategory(file.category)} · {file.fileType.toUpperCase()} ·{" "}
+                    {new Date(file.ingestedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              {canRequest ? (
+                <button
+                  type="button"
+                  onClick={() => requestFile(file.id)}
+                  disabled={requesting === file.id}
+                  className="rounded-lg border border-emerald-600/50 bg-emerald-600/10 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-600/20 disabled:opacity-50"
+                >
+                  {requesting === file.id ? "Requesting…" : "Request file"}
+                </button>
+              ) : (
+                <span className="text-xs text-slate-500">View only</span>
+              )}
+            </article>
+          ))
+        )}
       </div>
     </div>
   );

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { absoluteDownloadUrl, jobsApi, type AdminJob } from "../lib/api";
+import { jobsApi, type AdminJob } from "../lib/api";
 import { SlaTimer } from "./SlaTimer";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pending",
   assigned: "Assigned",
   in_progress: "In progress",
-  ready: "Ready",
+  ready: "Ready for client",
   delivered: "Delivered",
   expired: "Expired",
   failed: "Failed",
@@ -23,7 +23,6 @@ export function JobQueue() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionJobId, setActionJobId] = useState<string | null>(null);
-  const [completedLinks, setCompletedLinks] = useState<Record<string, string>>({});
   const [now, setNow] = useState(Date.now());
   const fetchedAt = useRef(Date.now());
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
@@ -60,13 +59,7 @@ export function JobQueue() {
     try {
       if (action === "assign") await jobsApi.assign(jobId);
       else if (action === "start") await jobsApi.start(jobId);
-      else {
-        const result = await jobsApi.complete(jobId);
-        setCompletedLinks((prev) => ({
-          ...prev,
-          [jobId]: absoluteDownloadUrl(result.job.downloadUrl),
-        }));
-      }
+      else await jobsApi.complete(jobId);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed");
@@ -78,7 +71,9 @@ export function JobQueue() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-zinc-400">Live retrieval queue with 15-minute SLA countdown</p>
+        <p className="text-sm text-zinc-400">
+          Live retrieval queue with 15-minute SLA — ops never download client file bytes
+        </p>
         <label className="flex items-center gap-2 text-sm text-zinc-400">
           <input
             type="checkbox"
@@ -143,7 +138,7 @@ export function JobQueue() {
                   </div>
                 )}
 
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   {job.status === "pending" && (
                     <button
                       type="button"
@@ -171,18 +166,13 @@ export function JobQueue() {
                       onClick={() => void runAction(job.id, "complete")}
                       className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium hover:bg-emerald-500 disabled:opacity-50"
                     >
-                      Complete & stage download
+                      Complete & stage for client
                     </button>
                   )}
-                  {(job.status === "ready" || completedLinks[job.id]) && (
-                    <a
-                      href={completedLinks[job.id]}
-                      className="rounded border border-emerald-600/50 px-3 py-1.5 text-xs text-emerald-300 hover:bg-emerald-600/20"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Client download link
-                    </a>
+                  {job.status === "ready" && (
+                    <p className="rounded border border-emerald-600/40 bg-emerald-950/30 px-3 py-1.5 text-xs text-emerald-300">
+                      Staged on vault — awaiting client download in their portal
+                    </p>
                   )}
                 </div>
               </article>

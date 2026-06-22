@@ -245,21 +245,40 @@ describe("retrieval staging + download (Day 9)", () => {
     const complete = await opsAgent.post(`/api/v1/admin/jobs/${JOB_ID}/complete`);
     expect(complete.status).toBe(200);
     expect(complete.body.job.status).toBe("ready");
-    expect(complete.body.job.downloadUrl).toMatch(/^\/api\/v1\/retrieval\/download\?token=/);
+    expect(complete.body.job.stagedForClient).toBe(true);
+    expect(complete.body.job).not.toHaveProperty("downloadUrl");
     expect(store.enqueuedExpiries).toContain(JOB_ID);
     expect(store.auditEvents.some((e) => e.action === "retrieval.staged")).toBe(true);
+    expect(store.auditEvents.some((e) => e.action === "retrieval.client_notified")).toBe(true);
 
     const stagingPath = join(stagingDir, "retrieval", JOB_ID, "scan-001.dcm");
     await expect(access(stagingPath)).resolves.toBeUndefined();
 
-    const download = await request(app).get(complete.body.job.downloadUrl);
+    const clientAgent = request.agent(app);
+    await clientAgent
+      .post("/api/v1/auth/login")
+      .send({ email: "admin@acme.test", password: PASSWORD });
+
+    const job = store.jobs.find((j) => String(j._id) === JOB_ID);
+    const downloadToken = job?.downloadToken;
+    expect(downloadToken).toBeTruthy();
+
+    const download = await clientAgent.get(
+      `/api/v1/retrieval/download?token=${encodeURIComponent(downloadToken!)}`,
+    );
     expect(download.status).toBe(200);
     expect(download.body.toString()).toBe(payload.toString());
 
-    const job = store.jobs.find((j) => String(j._id) === JOB_ID);
-    expect(job?.status).toBe("delivered");
+    expect(store.jobs.find((j) => String(j._id) === JOB_ID)?.status).toBe("delivered");
     await expect(access(stagingPath)).rejects.toThrow();
     expect(store.auditEvents.some((e) => e.action === "retrieval.downloaded")).toBe(true);
+    expect(
+      store.auditEvents.some(
+        (e) =>
+          e.action === "retrieval.downloaded" &&
+          String(e.userId) === "507f1f77bcf86cd799439012",
+      ),
+    ).toBe(true);
     expect(store.auditEvents.some((e) => e.action === "retrieval.staging_purged")).toBe(true);
   });
 

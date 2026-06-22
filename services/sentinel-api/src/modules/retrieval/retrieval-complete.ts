@@ -65,6 +65,14 @@ export type CompleteRetrievalResult = {
   downloadExpiresAt: string;
 };
 
+/** Admin-facing response — no download URL; bytes stay client-only. */
+export type AdminCompleteRetrievalResult = {
+  id: string;
+  status: string;
+  downloadExpiresAt: string;
+  stagedForClient: true;
+};
+
 export async function completeRetrievalJob(
   jobId: string,
   userId: string,
@@ -129,6 +137,18 @@ export async function completeRetrievalJob(
     },
   });
 
+  await recordAuditEvent({
+    action: "retrieval.client_notified",
+    userId: new Types.ObjectId(userId),
+    clientId: job.clientId as Types.ObjectId,
+    ipAddress,
+    payload: {
+      retrievalJobId: jobId,
+      channel: "portal",
+      note: "Client may download from Retrieval jobs when status is ready",
+    },
+  });
+
   await enqueueDownloadExpiry(jobId, DOWNLOAD_TTL_MS);
 
   const downloadUrl = buildDownloadPath(downloadToken);
@@ -138,5 +158,14 @@ export async function completeRetrievalJob(
     status: job.status,
     downloadUrl,
     downloadExpiresAt: downloadExpiresAt.toISOString(),
+  };
+}
+
+export function toAdminCompleteResult(result: CompleteRetrievalResult): AdminCompleteRetrievalResult {
+  return {
+    id: result.id,
+    status: result.status,
+    downloadExpiresAt: result.downloadExpiresAt,
+    stagedForClient: true,
   };
 }

@@ -1,7 +1,21 @@
+import { dirname, isAbsolute, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const apiRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+
 function env(key: string, fallback?: string): string {
   const v = process.env[key] ?? fallback;
   if (v === undefined) throw new Error(`Missing required env: ${key}`);
   return v;
+}
+
+function resolveStagingPath(raw: string): string {
+  return isAbsolute(raw) ? raw : join(apiRoot, raw);
+}
+
+/** Resolved on each read so tests can stub STAGING_PATH and seed/API share the same root. */
+export function getStagingPath(): string {
+  return resolveStagingPath(process.env.STAGING_PATH ?? "./staging");
 }
 
 export const config = {
@@ -10,7 +24,9 @@ export const config = {
   version: process.env.APP_VERSION ?? "0.1.0-mvp",
   mongoUri: env("MONGODB_URI", "mongodb://localhost:27017/sentinel"),
   redisUrl: env("REDIS_URL", "redis://localhost:6379"),
-  stagingPath: env("STAGING_PATH", "./staging"),
+  get stagingPath(): string {
+    return getStagingPath();
+  },
   tapeAdapter: (process.env.TAPE_ADAPTER ?? "sim") as "sim" | "mtx" | "scalar",
   sessionSecret: env("SESSION_SECRET", "dev-only-change-in-production"),
   searchTokenSecret: env("SEARCH_TOKEN_SECRET", "dev-only-search-token-secret"),

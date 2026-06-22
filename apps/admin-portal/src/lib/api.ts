@@ -11,12 +11,15 @@ async function parseJson<T>(res: Response): Promise<T> {
   return data as T;
 }
 
+const PORTAL_HEADER = "X-Sentinel-Portal";
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      [PORTAL_HEADER]: "ops",
       ...init?.headers,
     },
   });
@@ -95,7 +98,7 @@ export const jobsApi = {
     }),
   complete: (jobId: string) =>
     apiFetch<{
-      job: { id: string; status: string; downloadUrl: string; downloadExpiresAt: string };
+      job: { id: string; status: string; downloadExpiresAt: string; stagedForClient: true };
     }>(`/api/v1/admin/jobs/${jobId}/complete`, { method: "POST" }),
 };
 

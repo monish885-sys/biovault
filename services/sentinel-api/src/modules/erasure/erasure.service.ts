@@ -8,6 +8,7 @@ import { UserModel } from "../../db/schemas/user.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
 import { issueDeletionCertificate } from "../certificates/certificates.service.js";
 import { tokenizeSearchText } from "../../search/tokens.js";
+import { computeTapeHealthScore } from "../tapes/health.js";
 
 export type ErasureRequestSummary = {
   id: string;
@@ -189,6 +190,32 @@ export async function completeErasureRequest(
     { _id: { $in: fileIds } },
     { $set: { status: "deleted" } },
   );
+
+  const { TapeModel } = await import("../../db/schemas/tape.js");
+  const tapeBarcodes = doc.affectedTapeBarcodes ?? [];
+  for (const barcode of tapeBarcodes) {
+    const tape = await TapeModel.findOne({ barcode });
+    if (!tape) continue;
+    const tapeFileIds = await FileLocationModel.find({ tapeBarcode: barcode })
+      .select("fileId")
+      .lean();
+    const activeFiles = await FileModel.find({
+      _id: { $in: tapeFileIds.map((l) => l.fileId) },
+      status: "on_tape",
+    })
+      .select("sizeBytes")
+      .lean();
+    const usedBytes = activeFiles.reduce((sum, f) => sum + (f.sizeBytes ?? 0), 0);
+    const tapeCapBytes = 120_000_000_000;
+    const fillPercent = Math.min(99, Math.round((usedBytes / tapeCapBytes) * 100));
+    tape.fillPercent = fillPercent;
+    tape.healthScore = computeTapeHealthScore({
+      writeCycles: tape.writeCycles ?? 0,
+      fillPercent,
+      purchasedAt: tape.purchasedAt,
+    });
+    await tape.save();
+  }
 
   const tech = await UserModel.findById(technicianId).lean();
 

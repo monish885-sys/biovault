@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Transform, type Readable } from "node:stream";
 import { createHash } from "node:crypto";
-import { config } from "../config.js";
+import { getStagingPath } from "../config.js";
 import type {
   DriveState,
   FileLocator,
@@ -13,7 +13,7 @@ import type {
 } from "./adapter.js";
 
 function stagingRoot(): string {
-  return process.env.STAGING_PATH ?? config.stagingPath;
+  return getStagingPath();
 }
 
 function cartridgeDir(barcode: string): string {

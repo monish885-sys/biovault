@@ -115,6 +115,10 @@ Copy `deploy/.env.example` to `deploy/.env` (or export for local dev).
 
 Seeded login (after `db:seed`): `admin@acme.test` / `ChangeMe123!`
 
+**Demo catalog:** `db:seed` loads 12 archived files, 5 retrieval jobs (mixed statuses), 3 active tapes, and 2 erasure requests. Disable with `SEED_DEMO=0`.
+
+**Dual sessions:** Client (`5173`) and admin (`5174`) use separate session cookies so logging into one portal does not sign you out of the other.
+
 ## Ingest end-to-end (local)
 
 Requires API + Mongo + Redis + worker (API starts ingest worker automatically).

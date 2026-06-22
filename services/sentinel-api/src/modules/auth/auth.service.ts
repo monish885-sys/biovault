@@ -4,7 +4,8 @@ import { UnauthorizedError, ValidationError } from "@biovault/common";
 import { UserModel } from "../../db/schemas/user.js";
 import { isClientRole } from "./permissions.js";
 import { recordAuditEvent } from "../audit/audit.service.js";
-import { clearSessionCookie, setSessionCookie, signSession } from "./session.js";
+import type { UserRole } from "../../db/schemas/user.js";
+import { clearSessionCookie, portalForRole, setSessionCookie, signSession } from "./session.js";
 import type { Response } from "express";
 
 export type PublicUser = {
@@ -61,7 +62,7 @@ export async function login(
     role: user.role,
     clientId: user.clientId ? String(user.clientId) : undefined,
   });
-  setSessionCookie(res, token);
+  setSessionCookie(res, token, portalForRole(user.role));
 
   await recordAuditEvent({
     action: "auth.login",
@@ -77,10 +78,16 @@ export async function login(
 export async function logout(
   userId: string | undefined,
   clientId: string | undefined,
+  role: string | undefined,
   res: Response,
   ipAddress?: string,
 ): Promise<void> {
-  clearSessionCookie(res);
+  if (role) {
+    clearSessionCookie(res, portalForRole(role as UserRole));
+  } else {
+    clearSessionCookie(res, "client");
+    clearSessionCookie(res, "ops");
+  }
   if (userId && Types.ObjectId.isValid(userId)) {
     await recordAuditEvent({
       action: "auth.logout",

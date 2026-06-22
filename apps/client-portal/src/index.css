@@ -3,3 +3,30 @@
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
 }
+
+.bg-mesh {
+  background-color: #020617;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(59, 130, 246, 0.06), transparent),
+    radial-gradient(ellipse 50% 30% at 0% 80%, rgba(16, 185, 129, 0.05), transparent);
+}
+
+.vault-card {
+  @apply rounded-xl border border-slate-700/70 bg-slate-900/50 backdrop-blur-sm;
+}
+
+.tape-fill-animate {
+  animation: tapeFillIn 0.8s ease-out forwards;
+}
+
+@keyframes tapeFillIn {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+}

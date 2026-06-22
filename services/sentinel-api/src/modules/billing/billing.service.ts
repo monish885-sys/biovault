@@ -38,14 +38,14 @@ function monthStart(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }
 
-export async function getBillingSummary(clientId: string): Promise<BillingSummary> {
-  const client = await ClientModel.findById(clientId).lean();
-  if (!client) throw new Error("Client not found");
+export type StorageMetrics = {
+  storageBytes: number;
+  storageTb: number;
+  byCategory: Array<{ category: string; bytes: number; tb: number }>;
+};
 
-  const tier = (client.tier ?? "base") as TierKey;
-  const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.base;
+export async function getStorageMetrics(clientId: string): Promise<StorageMetrics> {
   const cid = new Types.ObjectId(clientId);
-
   const files = await FileModel.find({
     clientId: cid,
     status: { $in: ["on_tape", "indexing", "pending_deletion"] },
@@ -64,6 +64,19 @@ export async function getBillingSummary(clientId: string): Promise<BillingSummar
   const byCategory = [...categoryMap.entries()]
     .map(([category, bytes]) => ({ category, bytes, tb: roundTb(bytesToTb(bytes)) }))
     .sort((a, b) => b.bytes - a.bytes);
+
+  return { storageBytes, storageTb, byCategory };
+}
+
+export async function getBillingSummary(clientId: string): Promise<BillingSummary> {
+  const client = await ClientModel.findById(clientId).lean();
+  if (!client) throw new Error("Client not found");
+
+  const tier = (client.tier ?? "base") as TierKey;
+  const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.base;
+
+  const { storageBytes, storageTb, byCategory } = await getStorageMetrics(clientId);
+  const cid = new Types.ObjectId(clientId);
 
   const retrievalsUsed = await RetrievalJobModel.countDocuments({
     clientId: cid,

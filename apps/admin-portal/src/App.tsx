@@ -16,7 +16,8 @@ export function App() {
   const refreshSession = useCallback(async () => {
     try {
       const { user: me } = await authApi.me();
-      setUser(me);
+      const internal = me.role === "ops_admin" || me.role === "technician";
+      setUser(internal ? me : null);
     } catch {
       setUser(null);
     } finally {
@@ -40,7 +41,11 @@ export function App() {
   }
 
   async function handleLogout() {
-    await authApi.logout();
+    try {
+      await authApi.logout();
+    } catch {
+      // Clear local session even if cookie already expired
+    }
     setUser(null);
   }
 

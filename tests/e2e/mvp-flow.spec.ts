@@ -127,16 +127,16 @@ test.describe("MVP end-to-end flow", () => {
     if (await assignBtn.isVisible()) await assignBtn.click();
     const startBtn = adminPage.getByRole("button", { name: "Start" }).first();
     if (await startBtn.isVisible()) await startBtn.click();
-    await adminPage.getByRole("button", { name: "Complete" }).first().click();
+    await adminPage.getByRole("button", { name: /Complete.*stage for client/i }).first().click();
 
-    // Client download
+    // Client download (authenticated — not via admin link)
     await page.getByRole("button", { name: "Retrieval jobs" }).click();
-    const downloadLink = page.getByRole("link", { name: "Download file" });
-    await expect(downloadLink).toBeVisible({ timeout: 15_000 });
+    const downloadBtn = page.getByRole("button", { name: /Download file/i });
+    await expect(downloadBtn).toBeVisible({ timeout: 15_000 });
 
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      downloadLink.click(),
+      downloadBtn.click(),
     ]);
     const path = await download.path();
     expect(path).toBeTruthy();
@@ -148,6 +148,30 @@ test.describe("MVP end-to-end flow", () => {
     // Billing tab (Day 15)
     await page.getByRole("button", { name: "Billing" }).click();
     await expect(page.getByText("Storage used")).toBeVisible();
+    await expect(page.getByText("Invoice preview")).toBeVisible();
+
+    // Compliance + erasure (Day 16)
+    const erasureRes = await request.post(`${API}/api/v1/erasure/requests`, {
+      headers: { Cookie: clientCookie, "Content-Type": "application/json" },
+      data: {
+        subjectId: `E2E-${Date.now()}`,
+        reason: "E2E DPDPA erasure test",
+        searchQuery: searchTerm,
+      },
+    });
+    expect(erasureRes.ok()).toBeTruthy();
+
+    await page.getByRole("button", { name: "Compliance" }).click();
+    await expect(page.getByText(/awaiting degauss|completed/i)).toBeVisible({ timeout: 10_000 });
+
+    await adminPage.getByRole("button", { name: "Erasure queue" }).click();
+    await expect(adminPage.getByText(searchTerm)).toBeVisible({ timeout: 10_000 });
+    await adminPage.getByRole("button", { name: "Confirm degauss" }).first().click();
+
+    await page.getByRole("button", { name: "Compliance" }).click();
+    await expect(page.getByRole("link", { name: "Download certificate" })).toBeVisible({
+      timeout: 15_000,
+    });
 
     await adminPage.close();
   });

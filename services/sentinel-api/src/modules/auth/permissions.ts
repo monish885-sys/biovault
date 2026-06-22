@@ -23,6 +23,7 @@ export const ROUTE_ROLES = {
   ingestRead: CLIENT_ROLES,
   searchRead: CLIENT_ROLES,
   retrievalCreate: ["client_admin", "compliance_officer"] as const,
+  retrievalDownload: ["client_admin", "compliance_officer"] as const,
   adminOps: INTERNAL_ROLES,
   clientOnboarding: ["client_admin"] as const,
   clientProfile: CLIENT_ROLES,

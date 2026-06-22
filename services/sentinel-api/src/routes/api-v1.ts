@@ -39,13 +39,18 @@ apiV1Router.use(
   requireRoles(...ROUTE_ROLES.searchRead),
   searchRouter,
 );
-apiV1Router.get("/retrieval/download", retrievalDownloadHandler);
 apiV1Router.use(
   "/retrieval",
   requireAuth,
   requireClientUser,
-  requireRoles(...ROUTE_ROLES.retrievalCreate),
   retrievalRouter,
+);
+apiV1Router.get(
+  "/retrieval/download",
+  requireAuth,
+  requireClientUser,
+  requireRoles(...ROUTE_ROLES.retrievalDownload),
+  retrievalDownloadHandler,
 );
 apiV1Router.use(
   "/billing",
