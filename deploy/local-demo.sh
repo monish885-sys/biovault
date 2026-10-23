@@ -45,7 +45,7 @@ pnpm --filter @biovault/sentinel-api db:seed
 
 if ! curl -sf "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1; then
   log "Starting API on :${API_PORT}…"
-  pnpm --filter @biovault/sentinel-api start &
+  PORT="${API_PORT}" pnpm --filter @biovault/sentinel-api start &
   API_PID=$!
   for _ in $(seq 1 30); do
     curl -sf "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1 && break

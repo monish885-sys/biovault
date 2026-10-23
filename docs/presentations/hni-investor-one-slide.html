@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TerraVault — Investor Overview</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap");
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #0a0f14;
+      font-family: "DM Sans", system-ui, sans-serif;
+      color: #e8edf2;
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      padding: 3.2rem 3.6rem;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 1.6rem;
+      background:
+        radial-gradient(ellipse 80% 60% at 100% 0%, rgba(34, 120, 110, 0.18), transparent),
+        radial-gradient(ellipse 50% 40% at 0% 100%, rgba(20, 60, 90, 0.25), transparent),
+        #0a0f14;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 1rem;
+    }
+
+    .brand {
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .brand span { color: #3ecfba; }
+
+    .tagline {
+      font-size: 0.95rem;
+      color: #8fa3b3;
+      max-width: 28rem;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1.4rem 2rem;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 1.25rem 1.4rem;
+    }
+
+    .panel.full { grid-column: 1 / -1; }
+
+    h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #3ecfba;
+      margin-bottom: 0.65rem;
+    }
+
+    .idea-lead {
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: 1.55rem;
+      line-height: 1.35;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .idea-sub {
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: #a8bac8;
+    }
+
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    li {
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: #c5d3de;
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #3ecfba;
+    }
+
+    .build-flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .step {
+      background: rgba(62, 207, 186, 0.06);
+      border: 1px solid rgba(62, 207, 186, 0.15);
+      border-radius: 8px;
+      padding: 0.75rem 0.85rem;
+    }
+
+    .step-num {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #3ecfba;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.3rem;
+    }
+
+    .step-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .step-desc {
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: #8fa3b3;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #5c7080;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 0.85rem;
+    }
+
+    .pill {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      margin-right: 0.4rem;
+      color: #8fa3b3;
+    }
+
+    @media print {
+      @page { size: landscape; margin: 0; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <header>
+      <div class="brand">Terra<span>Vault</span></div>
+      <p class="tagline">Managed offline archival for regulated Indian enterprises — Phase 1</p>
+    </header>
+
+    <main>
+      <section class="panel full">
+        <h2>The Idea</h2>
+        <p class="idea-lead">A physical, air-gapped data vault — managed like cloud, secured like a bunker.</p>
+        <p class="idea-sub">
+          Hospitals, pharma, and enterprises must keep records for years under <strong>DPDPA 2023</strong>.
+          We store their archive on <strong>LTO-9 magnetic tape</strong> in a Tier-4 facility — permanently offline after write —
+          and give them a <strong>web dashboard</strong> to search metadata, request files, and prove compliance.
+          Not another cloud drive. A purpose-built <strong>compliance archive service</strong>.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>The Need</h2>
+        <ul>
+          <li><strong>DPDPA enforcement</strong> — retention, safeguards, erasure proof, audit readiness; fines up to ₹250 Cr</li>
+          <li><strong>On-premise risk</strong> — ransomware, fire, hardware failure on ageing NAS and servers</li>
+          <li><strong>Cloud cold storage</strong> — unpredictable retrieval costs, always-online attack surface, sovereignty concerns</li>
+          <li><strong>No good India-native option</strong> — global vault vendors lack DPDPA-first tooling; DIY compliance is expensive</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>What Must Exist</h2>
+        <ul>
+          <li><strong>Physical layer</strong> — LTO library, tapes, Tier-4 colocation (Hyderabad first), climate-controlled vault</li>
+          <li><strong>Operations</strong> — ingest, tape catalogue, 15-min retrieval SLA, technician runbooks, tape health lifecycle</li>
+          <li><strong>Software</strong> — client + admin portals, metadata index, job queue, immutable audit log</li>
+          <li><strong>Compliance</strong> — SHA-256 verify on every write, signed PDF certificates, Right to Erasure workflow</li>
+          <li><strong>Security boundary</strong> — file bytes on tape only; online systems hold metadata and jobs, never permanent content</li>
+        </ul>
+      </section>
+
+      <section class="panel full">
+        <h2>How It Gets Built</h2>
+        <div class="build-flow">
+          <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-title">Facility &amp; Hardware</div>
+            <div class="step-desc">Lease rack in Tier-4 colo. Deploy LTO-9 library, drives, ingest workstation. No owned data centre.</div>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-title">Ingest Pipeline</div>
+            <div class="step-desc">Client ships data via SFTP or courier → index + checksum → write tape → read-back verify → shelf.</div>
+          </div>
+          <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-title">Sentinel Dashboard</div>
+            <div class="step-desc">Search, retrieval requests, SLA tracking, billing visibility. Admin sees tape location; clients do not.</div>
+          </div>
+          <div class="step">
+            <div class="step-num">04</div>
+            <div class="step-title">Scale &amp; Trust</div>
+            <div class="step-desc">Pilot 3 Hyderabad clients → prove SLA and certificates → expand metros, optional multi-site tape mirrors.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div>
+        <span class="pill">Healthcare</span>
+        <span class="pill">Pharma</span>
+        <span class="pill">Fintech</span>
+        <span class="pill">Enterprise archive</span>
+      </div>
+      <div>India · Air-gapped · DPDPA-aligned · Confidential</div>
+    </footer>
+  </div>
+</body>
+</html>

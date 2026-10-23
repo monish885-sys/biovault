@@ -1,8 +1,10 @@
-# BioVault Sentinel (Phase 1)
+# BioVault Sentinel / TerraVault (Phase 1)
 
-Managed LTO-9 archival vault + **Sentinel Dashboard** — metadata and jobs online; tape bytes air-gapped offline.
+Managed LTO-9 archival vault + **TerraVault Dashboard** — metadata and jobs online; tape bytes air-gapped offline.
 
-Product context: [`docs/KT-phase1.md`](docs/KT-phase1.md)
+**Customer brand:** TerraVault · **Repo codename:** biovault-sentinel
+
+Product context: [`docs/KT-phase1.md`](docs/KT-phase1.md) · GTM kit: [`docs/gtm/README.md`](docs/gtm/README.md)
 
 ## Stack
 
@@ -24,6 +26,14 @@ Product context: [`docs/KT-phase1.md`](docs/KT-phase1.md)
 | `/admin/` | Admin portal — `tech@biovault.test` / `ChangeMe123!` |
 
 Deploy: see [`deploy/DEPLOY.md`](deploy/DEPLOY.md) — Fly.io, Render, Docker, or local + Cloudflare tunnel.
+
+**Record product demo video (1080p):**
+
+```bash
+pnpm demo:record   # → docs/gtm/demo-video/terravault-product-demo.webm
+```
+
+Voiceover script: [`docs/gtm/demo-script.md`](docs/gtm/demo-script.md)
 
 ```bash
 pnpm docker:demo    # build production image

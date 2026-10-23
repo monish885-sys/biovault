@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<ClinicalRecord category="clinical">
+  <FileName>clinical-note-8841.xml</FileName>
+  <Note>Simulated HL7/clinical XML archive</Note>
+</ClinicalRecord>

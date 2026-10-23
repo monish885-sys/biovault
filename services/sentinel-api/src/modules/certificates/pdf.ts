@@ -52,7 +52,7 @@ export async function buildIngestCertificatePdf(
     y -= lineHeight + (opts?.size && opts.size > 11 ? 4 : 0);
   };
 
-  draw("BioVault Sentinel — Ingest Confirmation Certificate", { bold: true, size: 16 });
+  draw("TerraVault — Ingest Confirmation Certificate", { bold: true, size: 16 });
   y -= 8;
   draw(`Client: ${content.clientName}`);
   draw(`Ingest Job: ${content.jobId}`);
@@ -124,7 +124,7 @@ export async function buildDeletionCertificatePdf(
     y -= lineHeight + (opts?.size && opts.size > 11 ? 4 : 0);
   };
 
-  draw("BioVault Sentinel — DPDPA Deletion Confirmation Certificate", { bold: true, size: 16 });
+  draw("TerraVault — DPDPA Deletion Confirmation Certificate", { bold: true, size: 16 });
   y -= 8;
   draw(`Client: ${content.clientName}`);
   draw(`Subject ID: ${content.subjectId}`);

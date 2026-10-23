@@ -1,0 +1,6 @@
+MSH|^~\&|ACME_LIS|ACME_HOSP|BIOVAULT|ARCHIVE|20240601093000||ORU^R01|DEMO001|P|2.5
+PID|1||P0042^^^ACME||DEMO^PATIENT
+OBR|1|||CBC^Complete Blood Count
+# BioVault Sentinel demo archive
+# File: lis-hl7-oru-r01-4410.hl7
+# Category: lab_reports

@@ -15,7 +15,7 @@ export function DemoBanner({ portal }: Props) {
     >
       <strong>Demo sandbox</strong> — simulated LTO-9 tape, no real PHI. Data may reset periodically.{" "}
       <a href="/" className="underline hover:opacity-80">
-        Back to biovault.in
+        Back to TerraVault
       </a>
     </div>
   );

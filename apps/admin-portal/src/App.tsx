@@ -66,9 +66,9 @@ export function App() {
         {DEMO_MODE && <DemoBanner portal="admin" />}
         <div className="p-8">
         <header className="mb-10 text-center">
-          <p className="text-sm uppercase tracking-widest text-amber-400">Operations</p>
-          <h1 className="mt-2 text-3xl font-semibold">Sentinel Admin Portal</h1>
-          <p className="mt-2 text-zinc-400">Sign in to manage retrieval jobs and tape inventory.</p>
+          <p className="text-sm uppercase tracking-widest text-amber-400">TerraVault Operations</p>
+          <h1 className="mt-2 text-3xl font-semibold">Vault Operations Portal</h1>
+          <p className="mt-2 text-zinc-400">Sign in to manage retrieval jobs, tape inventory, and DPDPA erasure.</p>
         </header>
         <LoginForm onLogin={handleLogin} error={loginError ?? undefined} />
         </div>
@@ -82,8 +82,8 @@ export function App() {
       <div className="p-6 md:p-8">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-700 pb-4">
         <div>
-          <p className="text-sm uppercase tracking-widest text-amber-400">Operations</p>
-          <h1 className="text-2xl font-semibold">Sentinel Admin Portal</h1>
+          <p className="text-sm uppercase tracking-widest text-amber-400">TerraVault Operations</p>
+          <h1 className="text-2xl font-semibold">Vault Operations Portal</h1>
           <p className="text-sm text-zinc-400">
             {user.email} · {user.role.replace(/_/g, " ")}
           </p>

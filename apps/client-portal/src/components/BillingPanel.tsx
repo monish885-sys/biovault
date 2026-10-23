@@ -128,7 +128,7 @@ export function BillingPanel() {
               <span className="font-semibold text-emerald-400">
                 {fmtInr(summary.savingsVsCloudInr)}
               </span>
-              /mo with BioVault Sentinel
+              /mo with TerraVault
             </p>
           </div>
         </div>

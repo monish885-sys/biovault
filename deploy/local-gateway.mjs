@@ -22,7 +22,29 @@ const MIME = {
   ".png": "image/png",
   ".ico": "image/x-icon",
   ".json": "application/json",
+  ".webm": "video/webm",
+  ".mp4": "video/mp4",
 };
+
+const demoVideoRoots = [
+  join(root, "apps/marketing/public/demo-video"),
+  join(root, "docs/gtm/demo-video"),
+];
+
+async function serveDemoVideo(urlPath, res) {
+  const rel = urlPath.replace(/^\/demo-video\//, "");
+  for (const base of demoVideoRoots) {
+    const candidate = join(base, rel);
+    if (existsSync(candidate)) {
+      const ext = extname(candidate);
+      const body = await readFile(candidate);
+      res.writeHead(200, { "Content-Type": MIME[ext] ?? "application/octet-stream" });
+      res.end(body);
+      return;
+    }
+  }
+  res.writeHead(404).end("Video not found");
+}
 
 async function serveStatic(prefix, urlPath, res) {
   const base = staticRoots[prefix];
@@ -91,6 +113,11 @@ createServer((req, res) => {
   }
   if (url.startsWith("/admin/")) {
     void serveStatic("/admin", url, res);
+    return;
+  }
+
+  if (url.startsWith("/demo-video/")) {
+    void serveDemoVideo(url, res);
     return;
   }
 

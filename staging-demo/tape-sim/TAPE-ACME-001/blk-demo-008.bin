@@ -1,0 +1,8 @@
+{
+  "archive": "biovault-sentinel-demo",
+  "filename": "patient-chart-summary-0312.json",
+  "category": "clinical",
+  "recordType": "lab_result",
+  "patientId": "P-DEMO-0042",
+  "capturedAt": "2024-06-01T09:30:00Z"
+}

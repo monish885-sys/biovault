@@ -106,7 +106,7 @@ export function App() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl ring-1 ring-emerald-500/30">
             🏥
           </div>
-          <p className="text-sm uppercase tracking-widest text-emerald-400">BioVault Sentinel</p>
+          <p className="text-sm uppercase tracking-widest text-emerald-400">TerraVault</p>
           <h1 className="mt-2 text-3xl font-bold text-white">Hospital Archive Portal</h1>
           <p className="mx-auto mt-2 max-w-md text-slate-400">
             Secure access to your offline medical records — search, request, and download with ease.
@@ -142,7 +142,7 @@ export function App() {
               🏥
             </div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-emerald-400">BioVault Sentinel</p>
+              <p className="text-xs uppercase tracking-widest text-emerald-400">TerraVault</p>
               <h1 className="text-xl font-bold text-white md:text-2xl">
                 {client?.name ?? "Client Portal"}
               </h1>

@@ -14,6 +14,7 @@
     "test": "turbo run test",
     "test:e2e": "playwright test",
     "demo": "bash scripts/demo-mvp.sh",
+    "demo:record": "bash scripts/record-demo-video.sh",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "compose:up": "docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example up -d",

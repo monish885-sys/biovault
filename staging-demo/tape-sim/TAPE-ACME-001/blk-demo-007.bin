@@ -1,0 +1,6 @@
+date,patient_id,test,result,unit
+2024-03-12,P-0312,glucose,92,mg/dL
+2024-03-12,P-0312,hemoglobin,13.8,g/dL
+# BioVault Sentinel demo archive
+# File: lab-results-export-2024.csv
+# Category: lab_reports

@@ -1,6 +1,10 @@
 import "./index.css";
 
 const DEMO_BASE = (import.meta.env.VITE_DEMO_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+const DEMO_VIDEO_URL =
+  (import.meta.env.VITE_DEMO_VIDEO_URL as string | undefined)?.trim() || "/demo-video/terravault-product-demo.webm";
+const PILOT_CONTACT =
+  (import.meta.env.VITE_PILOT_CONTACT as string | undefined)?.trim() || "hello@terravault.in";
 
 function demoPath(path: string): string {
   return DEMO_BASE ? `${DEMO_BASE}${path}` : path;
@@ -36,13 +40,6 @@ const STEPS = [
   { n: "4", label: "Retrieve", detail: "Request → technician → signed download → auto-purge staging" },
 ];
 
-function el(tag: string, className: string, html: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  node.innerHTML = html;
-  return node;
-}
-
 function mount() {
   const root = document.getElementById("app");
   if (!root) return;
@@ -53,41 +50,61 @@ function mount() {
         <div class="flex items-center gap-3">
           <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-xl ring-1 ring-emerald-500/30">📼</span>
           <div>
-            <p class="text-sm font-semibold text-white">BioVault</p>
-            <p class="text-xs text-slate-500">Sentinel Dashboard</p>
+            <p class="text-sm font-semibold text-white">TerraVault</p>
+            <p class="text-xs text-slate-500">Managed archival vault</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
           <a href="${demoPath("/client/")}" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Client portal</a>
-          <a href="${demoPath("/admin/")}" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Admin</a>
+          <a href="${demoPath("/admin/")}" class="hidden rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white sm:inline">Operations</a>
           <a href="${demoPath("/client/")}" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500">Launch demo</a>
         </div>
       </nav>
 
       <header class="mx-auto max-w-6xl px-6 pb-16 pt-10 text-center sm:pt-16">
         <p class="mb-4 inline-block rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1 text-xs font-medium uppercase tracking-widest text-emerald-400">
-          Phase 1 · Managed archival vault
+          Phase 1 · Hyderabad · DPDPA 2023
         </p>
         <h1 class="mx-auto max-w-4xl text-4xl font-bold leading-tight text-white sm:text-6xl">
           Your compliance archive,<br />
           <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">offline and under control</span>
         </h1>
         <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          BioVault Sentinel helps hospitals, pharma, and enterprises in India store legally required records on
+          TerraVault helps hospitals, pharma, and enterprises in India store legally required records on
           magnetic tape — secure, searchable, and DPDPA-aligned — with a modern web dashboard.
         </p>
         <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <a href="${demoPath("/client/")}" class="w-full rounded-xl bg-emerald-600 px-8 py-4 text-center text-lg font-semibold text-white shadow-lg shadow-emerald-900/40 hover:bg-emerald-500 sm:w-auto">
             Try interactive demo →
           </a>
-          <a href="${demoPath("/admin/")}" class="w-full rounded-xl border border-slate-600 px-8 py-4 text-center text-lg font-medium text-slate-200 hover:border-slate-500 sm:w-auto">
-            Admin operations view
+          <a href="#demo-video" class="w-full rounded-xl border border-slate-600 px-8 py-4 text-center text-lg font-medium text-slate-200 hover:border-slate-500 sm:w-auto">
+            Watch product tour
           </a>
         </div>
         <p class="mt-6 text-sm text-slate-500">
           Sandbox environment · simulated LTO-9 tape · resets periodically · no real PHI
         </p>
       </header>
+
+      <section id="demo-video" class="mx-auto max-w-4xl px-6 pb-20">
+        <div class="glass overflow-hidden p-2">
+          <h2 class="px-4 pt-4 text-center text-xl font-bold text-white">3-minute product tour</h2>
+          <p class="px-4 pb-4 text-center text-sm text-slate-400">
+            Search → retrieval → operations → DPDPA compliance — full workflow walkthrough
+          </p>
+          <video
+            class="w-full rounded-lg bg-black"
+            controls
+            playsinline
+            preload="metadata"
+            poster=""
+          >
+            <source src="${DEMO_VIDEO_URL}" type="video/webm" />
+            <source src="${DEMO_VIDEO_URL.replace(/\.webm$/, ".mp4")}" type="video/mp4" />
+            Your browser does not support embedded video. <a href="${demoPath("/client/")}" class="text-emerald-400 underline">Launch the interactive demo</a>.
+          </video>
+        </div>
+      </section>
 
       <section class="mx-auto max-w-6xl px-6 pb-20">
         <div class="glass grid gap-6 p-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -129,31 +146,34 @@ function mount() {
               <a href="${demoPath("/client/")}" class="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500">Open client demo</a>
             </div>
             <div class="p-8">
-              <h2 class="text-xl font-bold text-white">Admin portal</h2>
+              <h2 class="text-xl font-bold text-white">Operations portal</h2>
               <p class="mt-2 text-slate-400">Job queue with SLA timers, tape inventory with rack/slot, DPDPA erasure workflow.</p>
               <dl class="mt-6 space-y-2 text-sm">
                 <div class="flex gap-2"><dt class="text-slate-500">Email</dt><dd class="font-mono text-amber-400">tech@biovault.test</dd></div>
                 <div class="flex gap-2"><dt class="text-slate-500">Password</dt><dd class="font-mono text-slate-300">ChangeMe123!</dd></div>
               </dl>
-              <a href="${demoPath("/admin/")}" class="mt-6 inline-block rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-500">Open admin demo</a>
+              <a href="${demoPath("/admin/")}" class="mt-6 inline-block rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-500">Open operations demo</a>
             </div>
           </div>
         </div>
       </section>
 
       <section class="mx-auto max-w-6xl px-6 pb-24 text-center">
-        <h2 class="text-2xl font-bold text-white">Built for Indian compliance</h2>
+        <h2 class="text-2xl font-bold text-white">Hyderabad pilot — 3 founding partners</h2>
         <p class="mx-auto mt-4 max-w-2xl text-slate-400">
-          Hyderabad colocation · LTO-9 magnetic tape · metadata-only online tier · immutable audit log ·
-          signed PDF certificates for ingest and deletion.
+          Hospitals, diagnostic chains, and pharma teams: waived ingest fee for the first 90-day pilot.
+          Air-gapped LTO-9 storage, searchable dashboard, signed DPDPA deletion certificates.
         </p>
-        <a href="${demoPath("/client/")}" class="mt-8 inline-block rounded-xl bg-emerald-600 px-10 py-4 text-lg font-semibold text-white hover:bg-emerald-500">
-          Start exploring →
-        </a>
+        <p class="mt-6">
+          <a href="mailto:${PILOT_CONTACT}?subject=TerraVault%20Hyderabad%20Pilot" class="inline-block rounded-xl bg-emerald-600 px-10 py-4 text-lg font-semibold text-white hover:bg-emerald-500">
+            Request pilot details →
+          </a>
+        </p>
+        <p class="mt-4 text-sm text-slate-500">${PILOT_CONTACT}</p>
       </section>
 
       <footer class="border-t border-slate-800 py-8 text-center text-sm text-slate-600">
-        <p>© ${new Date().getFullYear()} BioVault Sentinel · Private demo · Not for production PHI</p>
+        <p>© ${new Date().getFullYear()} TerraVault · Private demo · Not for production PHI</p>
         <p class="mt-1"><a href="/health" class="hover:text-slate-400">API health</a></p>
       </footer>
     </div>
